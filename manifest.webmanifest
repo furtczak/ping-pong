@@ -1,0 +1,14 @@
+{
+  "name": "写字 Xiězì — Chinese Handwriting Dictionary",
+  "short_name": "写字",
+  "description": "Draw Chinese characters with your finger, get pinyin with tones, definitions and example sentences.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f3ee",
+  "theme_color": "#8f1631",
+  "icons": [
+    { "src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
