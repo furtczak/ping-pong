@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>写字 Xiězì — Chinese Handwriting Dictionary</title>
+<meta name="description" content="Draw Chinese characters with your finger, get pinyin with tones, definitions and example sentences. Works offline.">
+<meta name="theme-color" content="#8f1631">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="写字">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="logo">写</span><div><h1>写字 Xiězì</h1><p>handwriting · pinyin · sentences</p></div></div>
+  <button id="themeInfo" class="ghost small" hidden></button>
+</header>
+
+<main>
+  <!-- Composer: the word being built -->
+  <section class="composer card">
+    <div class="composer-row">
+      <div id="composedWord" class="composed" aria-live="polite"><span class="placeholder">Draw a character below ↓</span></div>
+      <div class="composer-btns">
+        <button id="speakWord" class="ghost" title="Speak">🔊</button>
+        <button id="backspace" class="ghost" title="Delete last character">⌫</button>
+        <button id="clearWord" class="ghost" title="Clear">✕</button>
+      </div>
+    </div>
+    <div class="typebar">
+      <input id="typeInput" type="text" inputmode="text" placeholder="…or type / paste characters (e.g. 我爱你)" autocomplete="off">
+    </div>
+  </section>
+
+  <!-- Handwriting pad -->
+  <section class="card">
+    <div class="pad-head">
+      <h2>Write with your finger</h2>
+      <div>
+        <button id="undoStroke" class="ghost">↩︎ Undo stroke</button>
+        <button id="clearPad" class="ghost">Clear</button>
+      </div>
+    </div>
+    <div class="pad-wrap">
+      <canvas id="pad"></canvas>
+      <div id="padStatus" class="pad-status">loading recognizer…</div>
+    </div>
+    <div id="candidates" class="candidates" aria-live="polite"></div>
+  </section>
+
+  <!-- Dictionary result -->
+  <section id="dictCard" class="card" hidden>
+    <h2>Dictionary</h2>
+    <div id="dictResults"></div>
+    <div id="suggestWrap" hidden>
+      <h3>Words starting with <span id="suggestKey"></span></h3>
+      <div id="suggestions" class="suggestions"></div>
+    </div>
+  </section>
+
+  <!-- Example sentences -->
+  <section id="sentCard" class="card" hidden>
+    <div class="pad-head">
+      <h2>Example sentences</h2>
+      <label class="toggle"><input type="checkbox" id="pinyinToggle" checked> pinyin</label>
+    </div>
+    <div id="sentStatus" class="muted"></div>
+    <ol id="sentences" class="sentences"></ol>
+    <button id="moreSents" class="wide ghost" hidden>Show more</button>
+  </section>
+
+  <footer>
+    <p>Runs entirely in your browser — free &amp; offline after first load.</p>
+    <p>Dictionary: <a href="https://cc-cedict.org/">CC-CEDICT</a> (CC BY-SA 4.0) · Sentences: <a href="https://tatoeba.org/">Tatoeba</a> (CC BY 2.0 FR) · Recognition: <a href="https://github.com/gugray/HanziLookupJS">HanziLookupJS</a> (LGPL)</p>
+    <p>Tip: in Safari tap <strong>Share → Add to Home Screen</strong> to install as an app.</p>
+  </footer>
+</main>
+
+<script src="lib/hanzilookup.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
