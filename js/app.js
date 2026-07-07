@@ -806,6 +806,405 @@
     document.body.classList.toggle('nopinyin', !this.checked);
   });
 
+  // ---------------------------------------------------------------- tabs
+  document.querySelectorAll('.tabs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.tabs button').forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      ['dict', 'cards', 'quiz'].forEach(function (t) {
+        $('tab-' + t).hidden = t !== b.getAttribute('data-tab');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------- learn: shared helpers
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+  function pinyinMarked(numbered) {
+    return numbered.split(/\s+/).map(function (s) { return syllableToMark(s).text; }).join(' ');
+  }
+
+  // best dictionary row for a word (prefers non-proper-noun reading)
+  function bestRow(w) {
+    var idxs = exactIndex.get(w) || exactIndex.get(toSimp(w)) || [];
+    if (!idxs.length) return null;
+    for (var i = 0; i < idxs.length; i++) {
+      if (!/[A-Z]/.test(dict[idxs[i]][2])) return dict[idxs[i]];
+    }
+    return dict[idxs[0]];
+  }
+
+  // segment a sentence into dictionary words (longest match) — "as a Chinese reader sees it"
+  function segmentZh(zh) {
+    var out = [];
+    var i = 0;
+    while (i < zh.length) {
+      var matched = null;
+      for (var L = Math.min(4, zh.length - i); L >= 1; L--) {
+        var w = zh.substr(i, L);
+        if (charPinyin.has(w)) { matched = w; break; }
+      }
+      out.push(matched || zh[i]);
+      i += (matched || zh[i]).length;
+    }
+    return out;
+  }
+
+  function hintChipsHtml(zh, withGloss, skipWord) {
+    return segmentZh(zh).map(function (w) {
+      if (skipWord && w === skipWord) {
+        return '<span class="hint-chip"><span class="hz">？</span><span class="py">…</span></span>';
+      }
+      if (!/[㐀-鿿]/.test(w)) {
+        return '<span class="hint-chip"><span class="hz">' + esc(w) + '</span></span>';
+      }
+      var row = bestRow(w);
+      var py = row ? pinyinHtml(row[2]) : (charPinyin.has(w) ? pinyinHtml(charPinyin.get(w)) : '');
+      var gl = '';
+      if (withGloss && row) {
+        gl = row[3].split(';')[0].trim();
+        if (gl.length > 26) gl = gl.slice(0, 26) + '…';
+      }
+      return '<span class="hint-chip"><span class="hz">' + esc(w) + '</span>' +
+        '<span class="py">' + py + '</span>' +
+        (gl ? '<span class="gl">' + esc(gl) + '</span>' : '') + '</span>';
+    }).join('');
+  }
+
+  function hskPool(level) {
+    var seen = {};
+    var pool = [];
+    for (var i = 0; i < dict.length; i++) {
+      var row = dict[i];
+      if (row[5] === level && !seen[row[0]] && !/[A-Z]/.test(row[2])) {
+        seen[row[0]] = true;
+        pool.push(row);
+      }
+    }
+    return pool;
+  }
+
+  function levelButtons(containerId, def) {
+    var box = $(containerId);
+    for (var l = 1; l <= 6; l++) {
+      var b = document.createElement('button');
+      b.textContent = 'HSK ' + l;
+      b.setAttribute('data-v', l);
+      if (l === def) b.classList.add('sel');
+      box.appendChild(b);
+    }
+    selectable(box);
+  }
+
+  function countButtons(containerId, counts, def) {
+    var box = $(containerId);
+    counts.forEach(function (c) {
+      var b = document.createElement('button');
+      b.textContent = c;
+      b.setAttribute('data-v', c);
+      if (c === def) b.classList.add('sel');
+      box.appendChild(b);
+    });
+    selectable(box);
+  }
+
+  function selectable(box) {
+    box.addEventListener('click', function (ev) {
+      var b = ev.target.closest('button');
+      if (!b) return;
+      box.querySelectorAll('button').forEach(function (x) { x.classList.remove('sel'); });
+      b.classList.add('sel');
+    });
+  }
+
+  function selectedVal(containerId) {
+    var b = $(containerId).querySelector('button.sel');
+    return b ? +b.getAttribute('data-v') : 1;
+  }
+
+  levelButtons('cardsLevel', 1);
+  countButtons('cardsCount', [10, 20, 40], 10);
+  levelButtons('quizLevel', 1);
+  countButtons('quizCount', [5, 10, 15], 10);
+
+  // ---------------------------------------------------------------- flashcards
+  var fc = { deck: [], i: 0, known: 0, missed: [], seen: 0, total: 0, flipped: false };
+
+  $('cardsStart').addEventListener('click', function () {
+    if (!dict) { $('cardsSetupNote').hidden = false; return; }
+    var pool = hskPool(selectedVal('cardsLevel'));
+    if (!pool.length) return;
+    startDeck(shuffle(pool.slice()).slice(0, selectedVal('cardsCount')));
+  });
+
+  function startDeck(rows) {
+    fc.deck = rows.slice();
+    fc.total = rows.length;
+    fc.i = 0; fc.known = 0; fc.seen = 0; fc.missed = [];
+    $('cardsSetup').hidden = true; $('cardsDone').hidden = true; $('cardsPlay').hidden = false;
+    showCard();
+  }
+
+  function showCard() {
+    var row = fc.deck[fc.i];
+    fc.flipped = false;
+    $('cardsProgress').textContent = fc.known + ' / ' + fc.total + ' known · ' + fc.deck.length + ' left';
+    $('fcFront').hidden = false;
+    $('fcBack').hidden = true;
+    $('fcFront').innerHTML = esc(row[0]) + (row[1] ? '<span class="fc-trad">(' + esc(row[1]) + ')</span>' : '');
+    var defs = row[3]; if (defs.length > 120) defs = defs.slice(0, 120) + '…';
+    $('fcBack').innerHTML = '<div class="fc-hz">' + esc(row[0]) + '</div>' +
+      '<div class="fc-py">' + pinyinHtml(row[2]) + '</div>' +
+      '<div class="fc-def">' + esc(defs) + '</div>';
+    var card = $('fcCard');
+    card.style.transform = '';
+    card.classList.remove('dragging');
+  }
+
+  function flipCard() {
+    fc.flipped = !fc.flipped;
+    $('fcFront').hidden = fc.flipped;
+    $('fcBack').hidden = !fc.flipped;
+    if (fc.flipped) speak(fc.deck[fc.i][0]);
+  }
+
+  function answerCard(know) {
+    var row = fc.deck[fc.i];
+    if (know) {
+      fc.known++;
+      fc.deck.splice(fc.i, 1);
+    } else {
+      if (fc.missed.indexOf(row) < 0) fc.missed.push(row);
+      // move it back into the deck a few cards later
+      fc.deck.splice(fc.i, 1);
+      fc.deck.splice(Math.min(fc.i + 3, fc.deck.length), 0, row);
+    }
+    if (!fc.deck.length || fc.known >= fc.total) return endDeck();
+    if (fc.i >= fc.deck.length) fc.i = 0;
+    showCard();
+  }
+
+  function endDeck() {
+    $('cardsPlay').hidden = true;
+    $('cardsDone').hidden = false;
+    var missed = fc.missed.length;
+    $('cardsStats').textContent = missed
+      ? 'You knew ' + (fc.total - missed) + ' of ' + fc.total + ' right away. ' + missed + ' needed another look.'
+      : 'Perfect — you knew all ' + fc.total + ' cards! 🎉';
+    $('cardsRedo').hidden = !missed;
+  }
+
+  $('cardsQuit').addEventListener('click', endDeck);
+  $('cardsRedo').addEventListener('click', function () { startDeck(shuffle(fc.missed.slice())); });
+  $('cardsNew').addEventListener('click', function () {
+    $('cardsDone').hidden = true; $('cardsSetup').hidden = false;
+  });
+  $('fcYes').addEventListener('click', function () { answerCard(true); });
+  $('fcNo').addEventListener('click', function () { answerCard(false); });
+
+  // swipe gestures
+  (function () {
+    var card = $('fcCard');
+    var startX = null, dx = 0;
+    card.addEventListener('pointerdown', function (ev) {
+      startX = ev.clientX; dx = 0;
+      card.setPointerCapture(ev.pointerId);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('pointermove', function (ev) {
+      if (startX === null) return;
+      dx = ev.clientX - startX;
+      card.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx / 18) + 'deg)';
+      card.querySelector('.fc-badge.know').style.opacity = Math.min(1, Math.max(0, dx / 70));
+      card.querySelector('.fc-badge.dunno').style.opacity = Math.min(1, Math.max(0, -dx / 70));
+    });
+    function up() {
+      if (startX === null) return;
+      card.classList.remove('dragging');
+      card.querySelector('.fc-badge.know').style.opacity = 0;
+      card.querySelector('.fc-badge.dunno').style.opacity = 0;
+      if (Math.abs(dx) > 80) {
+        var know = dx > 0;
+        card.style.transform = 'translateX(' + (know ? 500 : -500) + 'px) rotate(' + (know ? 30 : -30) + 'deg)';
+        setTimeout(function () { answerCard(know); }, 150);
+      } else {
+        card.style.transform = '';
+        if (Math.abs(dx) < 8) flipCard();
+      }
+      startX = null;
+    }
+    card.addEventListener('pointerup', up);
+    card.addEventListener('pointercancel', up);
+  })();
+
+  // ---------------------------------------------------------------- quiz
+  var qz = { queue: [], planned: 0, solved: 0, firstTry: 0, asked: 0, missedWords: [], cur: null, answered: false };
+
+  $('quizStart').addEventListener('click', function () {
+    if (!dict || !sentences) { $('quizSetupNote').hidden = false; return; }
+    var level = selectedVal('quizLevel');
+    var n = selectedVal('quizCount');
+    var qs = buildQuiz(level, n);
+    if (!qs.length) return;
+    qz.queue = qs;
+    qz.planned = qs.length;
+    qz.solved = 0; qz.firstTry = 0; qz.asked = 0; qz.missedWords = [];
+    $('quizSetup').hidden = true; $('quizDone').hidden = true; $('quizPlay').hidden = false;
+    nextQuestion();
+  });
+
+  function sentencesWith(word, maxLen) {
+    var out = [];
+    for (var i = 0; i < sentences.length && out.length < 25; i++) {
+      var zh = sentences[i][0];
+      if (zh.length <= maxLen && zh.indexOf(word) >= 0) out.push(sentences[i]);
+    }
+    return out;
+  }
+
+  function buildQuiz(level, n) {
+    var pool = shuffle(hskPool(level).slice());
+    var questions = [];
+    var usedEn = {};
+    for (var p = 0; p < pool.length && questions.length < n; p++) {
+      var row = pool[p];
+      var word = row[0];
+      var sents = sentencesWith(word, 22);
+      if (!sents.length) continue;
+      var sent = pick(sents);
+      var type = Math.random() < 0.5 ? 'blank' : 'translate';
+      if (type === 'blank') {
+        // distractors: same level, prefer same length
+        var others = pool.filter(function (r) {
+          return r[0] !== word && r[0].length === word.length && sent[0].indexOf(r[0]) < 0;
+        });
+        if (others.length < 3) {
+          others = pool.filter(function (r) { return r[0] !== word && sent[0].indexOf(r[0]) < 0; });
+        }
+        if (others.length < 3) continue;
+        var opts = shuffle([word].concat(shuffle(others.slice()).slice(0, 3).map(function (r) { return r[0]; })));
+        questions.push({ type: 'blank', word: word, row: row, zh: sent[0], en: sent[1], options: opts, correct: word });
+      } else {
+        if (usedEn[sent[1]]) continue;
+        usedEn[sent[1]] = true;
+        var distr = [];
+        var guard = 0;
+        while (distr.length < 3 && guard++ < 400) {
+          var s2 = pick(sentences);
+          if (s2[1] === sent[1] || s2[1].length > sent[1].length * 2 + 20) continue;
+          if (distr.indexOf(s2[1]) >= 0) continue;
+          distr.push(s2[1]);
+        }
+        if (distr.length < 3) continue;
+        questions.push({ type: 'translate', word: word, row: row, zh: sent[0], en: sent[1], options: shuffle([sent[1]].concat(distr)), correct: sent[1] });
+      }
+    }
+    return questions;
+  }
+
+  function nextQuestion() {
+    if (!qz.queue.length) return endQuiz();
+    qz.cur = qz.queue.shift();
+    qz.answered = false;
+    qz.asked++;
+    var q = qz.cur;
+    $('quizProgress').textContent = 'Solved ' + qz.solved + ' / ' + qz.planned + (q.retry ? ' · repeat' : '');
+    $('quizType').textContent = q.type === 'blank' ? 'Fill in the blank' : 'What does this sentence mean?';
+    if (q.type === 'blank') {
+      var zhBlank = esc(q.zh).replace(esc(q.word), '<span class="blank">＿＿</span>');
+      $('quizQ').innerHTML = zhBlank + '<span class="quiz-en">' + esc(q.en) + '</span>';
+    } else {
+      $('quizQ').innerHTML = esc(q.zh);
+    }
+    $('quizHint').hidden = true;
+    $('quizHint').innerHTML = '';
+    $('quizNext').hidden = true;
+    var box = $('quizAnswers');
+    box.innerHTML = '';
+    q.options.forEach(function (opt) {
+      var b = document.createElement('button');
+      b.textContent = opt;
+      b.addEventListener('click', function () { answerQuiz(b, opt); });
+      box.appendChild(b);
+    });
+  }
+
+  function answerQuiz(btn, opt) {
+    if (qz.answered) return;
+    qz.answered = true;
+    var q = qz.cur;
+    var good = opt === q.correct;
+    $('quizAnswers').querySelectorAll('button').forEach(function (b) {
+      b.disabled = true;
+      if (b.textContent === q.correct) b.classList.add('good');
+    });
+    if (good) {
+      qz.solved++;
+      if (!q.retry) qz.firstTry++;
+    } else {
+      btn.classList.add('bad');
+      if (qz.missedWords.indexOf(q.word) < 0) qz.missedWords.push(q.word);
+      // the question comes back later in the session
+      var copy = {};
+      for (var k in q) copy[k] = q[k];
+      copy.retry = true;
+      copy.options = shuffle(q.options.slice());
+      qz.queue.splice(Math.min(2 + Math.floor(Math.random() * 3), qz.queue.length), 0, copy);
+    }
+    $('quizProgress').textContent = 'Solved ' + qz.solved + ' / ' + qz.planned;
+    $('quizNext').hidden = false;
+  }
+
+  $('quizNext').addEventListener('click', nextQuestion);
+  $('quizQuit').addEventListener('click', endQuiz);
+  $('quizSpeak').addEventListener('click', function () { if (qz.cur) speak(qz.cur.zh); });
+
+  // hint: how the sentence splits into words (pinyin only)
+  $('hintSplit').addEventListener('click', function () {
+    if (!qz.cur) return;
+    var q = qz.cur;
+    $('quizHint').hidden = false;
+    $('quizHint').innerHTML = hintChipsHtml(q.zh, false, q.type === 'blank' && !qz.answered ? q.word : null);
+  });
+
+  // full hint: split + pinyin + meaning of every word
+  $('hintFull').addEventListener('click', function () {
+    if (!qz.cur) return;
+    var q = qz.cur;
+    $('quizHint').hidden = false;
+    $('quizHint').innerHTML = hintChipsHtml(q.zh, true, q.type === 'blank' && !qz.answered ? q.word : null);
+  });
+
+  function endQuiz() {
+    $('quizPlay').hidden = true;
+    $('quizDone').hidden = false;
+    var pct = qz.planned ? Math.round(100 * qz.firstTry / qz.planned) : 0;
+    $('quizStats').textContent = 'First-try score: ' + qz.firstTry + ' / ' + qz.planned + ' (' + pct + '%)' +
+      (qz.asked > qz.planned ? ' · ' + (qz.asked - qz.planned) + ' repeats needed' : '');
+    var rev = $('quizReview');
+    rev.innerHTML = '';
+    if (qz.missedWords.length) {
+      rev.innerHTML = '<h3>Worth another look</h3>' + qz.missedWords.map(function (w) {
+        var row = bestRow(w);
+        if (!row) return '';
+        var d = row[3].split(';')[0];
+        return '<div class="quiz-review-item"><b>' + esc(w) + '</b> ' + pinyinHtml(row[2]) + ' — ' + esc(d) + '</div>';
+      }).join('');
+    }
+  }
+
+  $('quizNew').addEventListener('click', function () {
+    $('quizDone').hidden = true; $('quizSetup').hidden = false;
+  });
+
   // ---------------------------------------------------------------- PWA
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(function () {});

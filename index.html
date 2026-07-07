@@ -23,6 +23,13 @@
 </header>
 
 <main>
+<nav class="tabs">
+  <button data-tab="dict" class="active">✍️ Dictionary</button>
+  <button data-tab="cards">🃏 Flashcards</button>
+  <button data-tab="quiz">🎯 Quiz</button>
+</nav>
+
+<div id="tab-dict">
   <!-- Composer: the word being built -->
   <section class="composer card">
     <div class="composer-row">
@@ -75,6 +82,78 @@
     <ol id="sentences" class="sentences"></ol>
     <button id="moreSents" class="wide ghost" hidden>Show more</button>
   </section>
+</div>
+
+<div id="tab-cards" hidden>
+  <section class="card" id="cardsSetup">
+    <h2>Flashcards</h2>
+    <p class="muted">Swipe right if you know the word, left to see it again. Tap a card to flip it.</p>
+    <h3>HSK level</h3>
+    <div class="opt-row" id="cardsLevel"></div>
+    <h3>Cards</h3>
+    <div class="opt-row" id="cardsCount"></div>
+    <button class="primary wide" id="cardsStart">Start</button>
+    <p class="muted" id="cardsSetupNote" hidden>Loading dictionary…</p>
+  </section>
+
+  <section class="card" id="cardsPlay" hidden>
+    <div class="learn-top"><span id="cardsProgress" class="muted"></span><button class="ghost small" id="cardsQuit">End session</button></div>
+    <div class="fc-stage">
+      <div class="fc-card" id="fcCard">
+        <div class="fc-badge know">✓</div>
+        <div class="fc-badge dunno">✗</div>
+        <div class="fc-front" id="fcFront"></div>
+        <div class="fc-back" id="fcBack" hidden></div>
+      </div>
+    </div>
+    <p class="muted center-note">tap to flip · swipe → I know it · swipe ← again</p>
+    <div class="fc-btns">
+      <button id="fcNo">✗ Still learning</button>
+      <button id="fcYes">✓ I know it</button>
+    </div>
+  </section>
+
+  <section class="card" id="cardsDone" hidden>
+    <h2>Session finished</h2>
+    <p id="cardsStats"></p>
+    <button class="primary wide" id="cardsRedo" hidden>Repeat the ones I missed</button>
+    <button class="wide" id="cardsNew">New deck</button>
+  </section>
+</div>
+
+<div id="tab-quiz" hidden>
+  <section class="card" id="quizSetup">
+    <h2>Quiz</h2>
+    <p class="muted">A question with four answers — one is correct. Anything you miss comes back later in the session. Hints available: word split and full hint.</p>
+    <h3>HSK level</h3>
+    <div class="opt-row" id="quizLevel"></div>
+    <h3>Questions</h3>
+    <div class="opt-row" id="quizCount"></div>
+    <button class="primary wide" id="quizStart">Start</button>
+    <p class="muted" id="quizSetupNote" hidden>Loading sentences…</p>
+  </section>
+
+  <section class="card" id="quizPlay" hidden>
+    <div class="learn-top"><span id="quizProgress" class="muted"></span><button class="ghost small" id="quizQuit">End session</button></div>
+    <p class="quiz-type muted" id="quizType"></p>
+    <div class="quiz-q" id="quizQ"></div>
+    <div class="quiz-hintbar">
+      <button class="ghost small" id="hintSplit">✂️ Word split</button>
+      <button class="ghost small" id="hintFull">💡 Full hint</button>
+      <button class="ghost small" id="quizSpeak">🔊</button>
+    </div>
+    <div id="quizHint" class="quiz-hint" hidden></div>
+    <div id="quizAnswers" class="quiz-answers"></div>
+    <button class="primary wide" id="quizNext" hidden>Next →</button>
+  </section>
+
+  <section class="card" id="quizDone" hidden>
+    <h2>Quiz finished</h2>
+    <p id="quizStats"></p>
+    <div id="quizReview"></div>
+    <button class="primary wide" id="quizNew">New quiz</button>
+  </section>
+</div>
 
   <footer>
     <p>Runs entirely in your browser — free &amp; offline after first load.</p>
