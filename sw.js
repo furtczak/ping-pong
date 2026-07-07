@@ -1,5 +1,5 @@
 /* Cache-first service worker: app works fully offline after first load. */
-var VERSION = 'xiezi-v3';
+var VERSION = 'xiezi-v4';
 var ASSETS = [
   './',
   'index.html',
@@ -10,6 +10,7 @@ var ASSETS = [
   'data/orig.json',
   'data/dict.json',
   'data/chars.json',
+  'data/medians.json',
   'data/sentences.json',
   'manifest.webmanifest',
   'icons/icon-180.png',

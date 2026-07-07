@@ -7,6 +7,8 @@
   // ---------------------------------------------------------------- state
   var dict = null;          // rows: [simp, trad, pinyin, defs, usage, hsk]
   var chars = null;         // char -> [etyType, hint, semantic, phonetic, components, radical]
+  var medians = null;       // char -> encoded stroke medians (shape matching + stroke-order animation)
+  var shapeBuckets = null;  // strokeCount -> [[char, normalized strokes], ...]
   var sentences = null;     // rows: [zh(simplified), en]
   var exactIndex = null;    // word (simp or trad) -> [row indices]
   var t2s = null;           // traditional char -> simplified char
@@ -67,8 +69,8 @@
   var loadSteps = 0;
   function step() {
     loadSteps++;
-    loadbar.style.width = (loadSteps / 4 * 100) + '%';
-    if (loadSteps >= 4) setTimeout(function () { loadbar.remove(); }, 600);
+    loadbar.style.width = (loadSteps / 5 * 100) + '%';
+    if (loadSteps >= 5) setTimeout(function () { loadbar.remove(); }, 600);
   }
 
   fetch('data/dict.json')
@@ -76,6 +78,14 @@
     .then(function (rows) {
       dict = rows;
       buildIndexes();
+      step();
+      refresh();
+      return fetch('data/medians.json');
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (map) {
+      medians = map;
+      buildShapeIndex();
       step();
       refresh();
       return fetch('data/chars.json');
@@ -219,7 +229,127 @@
     el.style.display = msg ? '' : 'none';
   }
 
-  // recognition: two independent stroke datasets, results merged for accuracy
+  // ---- shape matcher: order- and direction-independent stroke matching ----
+  var ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-';
+  var ALPHA_IDX = {};
+  for (var ai = 0; ai < ALPHA.length; ai++) ALPHA_IDX[ALPHA[ai]] = ai;
+  var SHAPE_K = 10; // points per stroke in medians data
+
+  function decodeMedians(str) {
+    var per = SHAPE_K * 2;
+    var n = str.length / per;
+    var strokes = [];
+    for (var s = 0; s < n; s++) {
+      var arr = new Float32Array(per);
+      for (var i = 0; i < per; i++) arr[i] = ALPHA_IDX[str[s * per + i]] / 63;
+      strokes.push(arr);
+    }
+    return strokes;
+  }
+
+  // uniform scale to bounding box, centered in unit square
+  function normalizeShape(strokes) {
+    var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    strokes.forEach(function (st) {
+      for (var i = 0; i < st.length; i += 2) {
+        if (st[i] < minX) minX = st[i];
+        if (st[i] > maxX) maxX = st[i];
+        if (st[i + 1] < minY) minY = st[i + 1];
+        if (st[i + 1] > maxY) maxY = st[i + 1];
+      }
+    });
+    var scale = Math.max(maxX - minX, maxY - minY, 1e-6);
+    var ox = (scale - (maxX - minX)) / 2, oy = (scale - (maxY - minY)) / 2;
+    return strokes.map(function (st) {
+      var out = new Float32Array(st.length);
+      for (var i = 0; i < st.length; i += 2) {
+        out[i] = (st[i] - minX + ox) / scale;
+        out[i + 1] = (st[i + 1] - minY + oy) / scale;
+      }
+      return out;
+    });
+  }
+
+  function buildShapeIndex() {
+    shapeBuckets = {};
+    for (var ch in medians) {
+      var strokes = normalizeShape(decodeMedians(medians[ch]));
+      var n = strokes.length;
+      (shapeBuckets[n] = shapeBuckets[n] || []).push([ch, strokes]);
+    }
+  }
+
+  function resamplePoints(pts, k) {
+    if (pts.length === 1) pts = [pts[0], pts[0]];
+    var dists = [0];
+    for (var i = 1; i < pts.length; i++) {
+      dists.push(dists[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    }
+    var total = dists[dists.length - 1] || 1;
+    var out = new Float32Array(k * 2);
+    var j = 0;
+    for (var t = 0; t < k; t++) {
+      var target = total * t / (k - 1);
+      while (j < dists.length - 2 && dists[j + 1] < target) j++;
+      var seg = dists[j + 1] - dists[j] || 1;
+      var f = (target - dists[j]) / seg;
+      out[t * 2] = pts[j][0] + (pts[j + 1][0] - pts[j][0]) * f;
+      out[t * 2 + 1] = pts[j][1] + (pts[j + 1][1] - pts[j][1]) * f;
+    }
+    return out;
+  }
+
+  // mean squared point distance, direction-independent
+  function strokeDist(a, b) {
+    var fwd = 0, rev = 0, K = SHAPE_K;
+    for (var i = 0; i < K; i++) {
+      var ax = a[i * 2], ay = a[i * 2 + 1];
+      var dxf = ax - b[i * 2], dyf = ay - b[i * 2 + 1];
+      fwd += dxf * dxf + dyf * dyf;
+      var ri = K - 1 - i;
+      var dxr = ax - b[ri * 2], dyr = ay - b[ri * 2 + 1];
+      rev += dxr * dxr + dyr * dyr;
+    }
+    return Math.min(fwd, rev) / K;
+  }
+
+  // greedy stroke-to-stroke assignment cost, order-independent
+  function assignCost(drawn, ref) {
+    var m = drawn.length, n = ref.length;
+    var pairs = [];
+    for (var i = 0; i < m; i++) {
+      for (var j = 0; j < n; j++) pairs.push([strokeDist(drawn[i], ref[j]), i, j]);
+    }
+    pairs.sort(function (a, b) { return a[0] - b[0]; });
+    var usedD = new Array(m), usedR = new Array(n);
+    var total = 0, matched = 0;
+    for (var p = 0; p < pairs.length && matched < Math.min(m, n); p++) {
+      var pr = pairs[p];
+      if (usedD[pr[1]] || usedR[pr[2]]) continue;
+      usedD[pr[1]] = usedR[pr[2]] = true;
+      total += pr[0];
+      matched++;
+    }
+    total += 0.12 * (m + n - 2 * matched); // unmatched stroke penalty
+    return total / Math.max(m, n);
+  }
+
+  function shapeMatch(rawStrokes, limit) {
+    var drawn = normalizeShape(rawStrokes.map(function (st) { return resamplePoints(st, SHAPE_K); }));
+    var m = drawn.length;
+    var results = [];
+    for (var n = Math.max(1, m - 1); n <= m + 1; n++) {
+      var bucket = shapeBuckets[n];
+      if (!bucket) continue;
+      for (var b = 0; b < bucket.length; b++) {
+        results.push([bucket[b][0], assignCost(drawn, bucket[b][1])]);
+      }
+    }
+    results.sort(function (a, b) { return a[1] - b[1]; });
+    return results.slice(0, limit).map(function (r) { return r[0]; });
+  }
+
+  // recognition: two stroke-order engines + the shape matcher, merged by vote
   var DATASETS = [['mmah', 'data/mmah.json'], ['orig', 'data/orig.json']];
   var loadedSets = [];
   var initDone = 0;
@@ -236,20 +366,25 @@
 
   var recogSeq = 0;
   function recognize() {
-    if (!recognizerReady) { setPadStatus('recognizer still loading…'); return; }
+    if (!recognizerReady && !shapeBuckets) { setPadStatus('recognizer still loading…'); return; }
     setPadStatus('');
     var seq = ++recogSeq;
-    var analyzed = new HanziLookup.AnalyzedCharacter(strokes);
+    var votes = new Map();
+    function addVotes(list, weight) {
+      list.forEach(function (ch, i) {
+        votes.set(ch, (votes.get(ch) || 0) + (14 - i) * weight);
+      });
+    }
+    // shape matcher: order/direction independent, double weight so beginners
+    // with unconventional stroke order still get the right character on top
+    if (shapeBuckets) addVotes(shapeMatch(strokes, 12), 2);
     var pending = loadedSets.length;
-    var best = new Map();
+    if (!pending) { if (seq === recogSeq) showCandidates(votes); return; }
+    var analyzed = new HanziLookup.AnalyzedCharacter(strokes);
     loadedSets.forEach(function (name) {
       new HanziLookup.Matcher(name).match(analyzed, 12, function (matches) {
-        (matches || []).forEach(function (m) {
-          if (!best.has(m.character) || m.score > best.get(m.character)) {
-            best.set(m.character, m.score);
-          }
-        });
-        if (--pending === 0 && seq === recogSeq) showCandidates(best);
+        addVotes((matches || []).map(function (m) { return m.character; }), 1);
+        if (--pending === 0 && seq === recogSeq) showCandidates(votes);
       });
     });
   }
@@ -339,7 +474,7 @@
       if (word.length === 1) {
         var info = charInfo(word);
         if (info && info[6]) noEntry += '<div class="entry"><div class="head"><span class="hz">' + esc(word) + '</span></div><p class="def">' + esc(info[6]) + '</p></div>';
-        noEntry += originHtml(word);
+        noEntry += howtoHtml(word) + originHtml(word);
       }
       out.innerHTML = noEntry + (word.length > 1 ? word.split('').map(charRowHtml).join('') : '');
     } else {
@@ -348,6 +483,7 @@
     }
     bindSpeakButtons(out);
     bindPartButtons(out);
+    initAnims(out);
     renderSuggestions();
   }
 
@@ -366,8 +502,118 @@
       hskBadge(hsk) +
       '<button class="speak" data-say="' + esc(simp) + '" title="Speak">🔊</button>' +
       '</div><p class="def">' + esc(defs) + '</p>' +
-      (simp.length === 1 ? originHtml(simp) : '') +
+      (simp.length === 1 ? howtoHtml(simp) + originHtml(simp) : '') +
       '</div>';
+  }
+
+  // --- stroke order animation (medians data) ---
+  function howtoChar(ch) {
+    if (!medians) return null;
+    if (medians[ch]) return ch;
+    var s = toSimp(ch);
+    return medians[s] ? s : null;
+  }
+
+  function howtoHtml(ch) {
+    var target = howtoChar(ch);
+    if (!target) return '';
+    return '<div class="howto">' +
+      '<canvas class="stroke-anim" data-char="' + esc(target) + '"></canvas>' +
+      '<div class="howto-note">How to write it<br><span>stroke by stroke — tap to replay</span></div>' +
+      '</div>';
+  }
+
+  function initAnims(scope) {
+    scope.querySelectorAll('canvas.stroke-anim').forEach(function (cv) {
+      var animate = makeStrokeAnimator(cv, cv.getAttribute('data-char'));
+      cv.addEventListener('click', animate);
+      animate();
+    });
+  }
+
+  function makeStrokeAnimator(canvas, ch) {
+    var CSS = 108;
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.height = Math.round(CSS * dpr);
+    var g = canvas.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var strokes = decodeMedians(medians[ch]);
+    var pad = 6, size = CSS - 2 * pad;
+    var pts = strokes.map(function (st) {
+      var p = [];
+      for (var i = 0; i < st.length; i += 2) p.push([pad + st[i] * size, pad + st[i + 1] * size]);
+      return p;
+    });
+    var lens = pts.map(function (p) {
+      var acc = [0];
+      for (var i = 1; i < p.length; i++) {
+        acc.push(acc[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+      }
+      return acc;
+    });
+
+    function path(p, upto) {
+      g.beginPath();
+      g.moveTo(p[0][0], p[0][1]);
+      var end = upto === undefined ? p.length : upto;
+      for (var i = 1; i < end; i++) g.lineTo(p[i][0], p[i][1]);
+    }
+
+    function drawPartial(s, dist) {
+      var p = pts[s], acc = lens[s];
+      g.beginPath();
+      g.moveTo(p[0][0], p[0][1]);
+      for (var i = 1; i < p.length; i++) {
+        if (acc[i] <= dist) { g.lineTo(p[i][0], p[i][1]); continue; }
+        var seg = acc[i] - acc[i - 1] || 1;
+        var f = (dist - acc[i - 1]) / seg;
+        if (f > 0) g.lineTo(p[i - 1][0] + (p[i][0] - p[i - 1][0]) * f, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * f);
+        break;
+      }
+      g.stroke();
+    }
+
+    function frame(done, cur, dist) {
+      g.clearRect(0, 0, CSS, CSS);
+      var style = getComputedStyle(document.body);
+      // ghost
+      g.lineWidth = 3; g.lineCap = g.lineJoin = 'round';
+      g.strokeStyle = style.getPropertyValue('--line').trim() || '#ddd';
+      pts.forEach(function (p) { path(p); g.stroke(); });
+      // finished + current strokes in ink
+      g.strokeStyle = style.color;
+      g.lineWidth = 6;
+      for (var s = 0; s < done; s++) { path(pts[s]); g.stroke(); }
+      if (cur >= 0) drawPartial(cur, dist);
+      // number the finished strokes
+      g.fillStyle = style.getPropertyValue('--muted').trim() || '#888';
+      g.font = '9px sans-serif';
+      for (var s2 = 0; s2 < done; s2++) {
+        g.fillText(String(s2 + 1), pts[s2][0][0] - 3, pts[s2][0][1] - 4);
+      }
+    }
+
+    return function run() {
+      if (canvas._raf) cancelAnimationFrame(canvas._raf);
+      var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduced) { frame(pts.length, -1, 0); return; }
+      var s = 0, start = null;
+      var SPEED = 0.22; // px per ms
+      function tick(ts) {
+        if (start === null) start = ts;
+        var total = lens[s][lens[s].length - 1];
+        var dist = (ts - start) * SPEED;
+        if (dist >= total + 40) { // small pause between strokes
+          s++;
+          start = ts;
+          if (s >= pts.length) { frame(pts.length, -1, 0); canvas._raf = null; return; }
+          dist = 0;
+        }
+        frame(s, s, Math.min(dist, total));
+        canvas._raf = requestAnimationFrame(tick);
+      }
+      canvas._raf = requestAnimationFrame(tick);
+    };
   }
 
   // --- character origin story + component breakdown (makemeahanzi data)
