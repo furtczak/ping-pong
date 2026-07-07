@@ -195,6 +195,73 @@ canvas.stroke-anim {
 body.nopinyin .zh ruby rt { display: none; }
 body.nopinyin .zh { line-height: 1.5; }
 
+/* Tabs */
+.tabs { display: flex; gap: 6px; margin: 4px 0 0; }
+.tabs button {
+  flex: 1; padding: 9px 4px; font-size: 14px; font-weight: 600;
+  background: transparent; border: 1px solid var(--line); border-radius: 12px; color: var(--muted);
+}
+.tabs button.active { background: var(--ink); color: var(--card); border-color: var(--ink); }
+
+/* Learn shared */
+.opt-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt-row button { background: var(--bg); border-radius: 99px; min-width: 44px; }
+.opt-row button.sel { background: var(--ink); color: var(--card); border-color: var(--ink); }
+button.primary { background: var(--ink); color: var(--card); border-color: var(--ink); font-weight: 600; padding: 11px 12px; }
+.learn-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.center-note { text-align: center; font-size: 12px; margin: 10px 0 0; }
+
+/* Flashcards */
+.fc-stage { display: flex; justify-content: center; }
+.fc-card {
+  position: relative; width: 100%; max-width: 340px; min-height: 250px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 18px;
+  cursor: pointer; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  transition: transform .18s ease;
+  padding: 18px;
+}
+.fc-card.dragging { transition: none; }
+.fc-front { font-size: 64px; text-align: center; }
+.fc-front .fc-trad { font-size: 22px; color: var(--muted); display: block; }
+.fc-back { text-align: center; }
+.fc-back .fc-hz { font-size: 40px; }
+.fc-back .fc-py { font-size: 22px; font-weight: 600; margin: 4px 0; }
+.fc-back .fc-def { font-size: 15px; }
+.fc-badge {
+  position: absolute; top: 12px; font-size: 22px; font-weight: 700;
+  border: 2px solid; border-radius: 10px; padding: 2px 10px; opacity: 0;
+}
+.fc-badge.know { left: 12px; color: var(--tone2); border-color: var(--tone2); transform: rotate(-12deg); }
+.fc-badge.dunno { right: 12px; color: var(--tone1); border-color: var(--tone1); transform: rotate(12deg); }
+.fc-btns { display: flex; gap: 10px; margin-top: 12px; }
+.fc-btns button { flex: 1; padding: 12px 4px; font-weight: 600; }
+#fcYes { color: var(--tone2); }
+#fcNo { color: var(--tone1); }
+
+/* Quiz */
+.quiz-type { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 6px; }
+.quiz-q { font-size: 24px; line-height: 1.7; margin-bottom: 4px; }
+.quiz-q .blank { border-bottom: 2px solid var(--ink); padding: 0 14px; }
+.quiz-q .quiz-en { display: block; font-size: 14px; color: var(--muted); margin-top: 4px; }
+.quiz-hintbar { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+.quiz-hint {
+  display: flex; flex-wrap: wrap; gap: 8px; padding: 10px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px;
+}
+.hint-chip { text-align: center; padding: 4px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.hint-chip .hz { font-size: 20px; display: block; }
+.hint-chip .py { font-size: 12px; font-weight: 600; display: block; }
+.hint-chip .gl { font-size: 11px; color: var(--muted); display: block; max-width: 110px; }
+.quiz-answers { display: grid; gap: 8px; }
+.quiz-answers button {
+  text-align: left; padding: 12px; font-size: 17px; border-radius: 12px; background: var(--bg);
+}
+.quiz-answers button.good { border-color: var(--tone2); color: var(--tone2); font-weight: 700; background: transparent; }
+.quiz-answers button.bad { border-color: var(--tone1); color: var(--tone1); background: transparent; }
+.quiz-answers button:disabled { opacity: .9; }
+.quiz-review-item { padding: 8px 0; border-top: 1px solid var(--line); font-size: 15px; }
+
 footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--muted); }
 footer a { color: inherit; }
 
