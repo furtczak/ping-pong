@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/chinese-character-recognition-kwx4ot
   workflow_dispatch:
 
 permissions:
