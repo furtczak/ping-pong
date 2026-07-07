@@ -103,7 +103,7 @@ button.wide { width: 100%; margin-top: 8px; }
 .pad-head h2 { margin: 0; }
 .pad-wrap { position: relative; display: flex; justify-content: center; }
 #pad {
-  width: min(100%, 320px); aspect-ratio: 1;
+  width: min(100%, 380px); aspect-ratio: 1;
   border: 2px solid var(--line); border-radius: 14px;
   touch-action: none;
   background:
@@ -136,6 +136,25 @@ button.wide { width: 100%; margin-top: 8px; }
   background: var(--accent-soft); border-radius: 6px; padding: 2px 6px; vertical-align: 2px;
 }
 .speak { border: 0; background: none; font-size: 17px; padding: 2px 4px; }
+
+/* Character origin & components */
+.origin {
+  margin-top: 8px; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+}
+.origin-type {
+  display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--accent);
+}
+.origin-story { margin: 0; font-size: 14px; }
+.origin-parts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.origin-eq { font-size: 18px; color: var(--muted); }
+.part {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border-radius: 10px; padding: 4px 10px; max-width: 100%;
+}
+.part-hz { font-size: 24px; }
+.part-gloss { font-size: 12px; color: var(--muted); text-align: left; }
 
 .suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
 .suggestions button { background: var(--bg); border-radius: 99px; font-size: 15px; }

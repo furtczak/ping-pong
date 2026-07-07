@@ -6,6 +6,7 @@
 
   // ---------------------------------------------------------------- state
   var dict = null;          // rows: [simp, trad, pinyin, defs, usage, hsk]
+  var chars = null;         // char -> [etyType, hint, semantic, phonetic, components, radical]
   var sentences = null;     // rows: [zh(simplified), en]
   var exactIndex = null;    // word (simp or trad) -> [row indices]
   var t2s = null;           // traditional char -> simplified char
@@ -66,8 +67,8 @@
   var loadSteps = 0;
   function step() {
     loadSteps++;
-    loadbar.style.width = (loadSteps / 3 * 100) + '%';
-    if (loadSteps >= 3) setTimeout(function () { loadbar.remove(); }, 600);
+    loadbar.style.width = (loadSteps / 4 * 100) + '%';
+    if (loadSteps >= 4) setTimeout(function () { loadbar.remove(); }, 600);
   }
 
   fetch('data/dict.json')
@@ -75,6 +76,13 @@
     .then(function (rows) {
       dict = rows;
       buildIndexes();
+      step();
+      refresh();
+      return fetch('data/chars.json');
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (map) {
+      chars = map;
       step();
       refresh();
       return fetch('data/sentences.json');
@@ -211,30 +219,57 @@
     el.style.display = msg ? '' : 'none';
   }
 
-  // recognition
-  HanziLookup.init('mmah', 'data/mmah.json', function (ok) {
-    recognizerReady = !!ok;
-    setPadStatus(recognizerReady ? '' : 'recognizer failed to load');
+  // recognition: two independent stroke datasets, results merged for accuracy
+  var DATASETS = [['mmah', 'data/mmah.json'], ['orig', 'data/orig.json']];
+  var loadedSets = [];
+  var initDone = 0;
+  DATASETS.forEach(function (ds) {
+    HanziLookup.init(ds[0], ds[1], function (ok) {
+      initDone++;
+      if (ok) loadedSets.push(ds[0]);
+      recognizerReady = loadedSets.length > 0;
+      if (recognizerReady) setPadStatus(strokes.length ? '' : '');
+      else if (initDone === DATASETS.length) setPadStatus('recognizer failed to load');
+      if (recognizerReady && strokes.length) recognize();
+    });
   });
 
+  var recogSeq = 0;
   function recognize() {
     if (!recognizerReady) { setPadStatus('recognizer still loading…'); return; }
     setPadStatus('');
+    var seq = ++recogSeq;
     var analyzed = new HanziLookup.AnalyzedCharacter(strokes);
-    new HanziLookup.Matcher('mmah').match(analyzed, 8, function (matches) {
-      var box = $('candidates');
-      box.innerHTML = '';
-      (matches || []).forEach(function (m) {
-        var b = document.createElement('button');
-        b.textContent = m.character;
-        b.addEventListener('click', function () {
-          setWord(word + m.character);
-          clearPad();
+    var pending = loadedSets.length;
+    var best = new Map();
+    loadedSets.forEach(function (name) {
+      new HanziLookup.Matcher(name).match(analyzed, 12, function (matches) {
+        (matches || []).forEach(function (m) {
+          if (!best.has(m.character) || m.score > best.get(m.character)) {
+            best.set(m.character, m.score);
+          }
         });
-        box.appendChild(b);
+        if (--pending === 0 && seq === recogSeq) showCandidates(best);
       });
-      if (!matches || !matches.length) setPadStatus('no match — try again');
     });
+  }
+
+  function showCandidates(best) {
+    var ranked = Array.from(best.entries())
+      .sort(function (a, b) { return b[1] - a[1]; })
+      .slice(0, 10);
+    var box = $('candidates');
+    box.innerHTML = '';
+    ranked.forEach(function (entry) {
+      var b = document.createElement('button');
+      b.textContent = entry[0];
+      b.addEventListener('click', function () {
+        setWord(word + entry[0]);
+        clearPad();
+      });
+      box.appendChild(b);
+    });
+    if (!ranked.length) setPadStatus('no match — try again');
   }
 
   sizePad();
@@ -299,13 +334,20 @@
     var out = $('dictResults');
     var idxs = exactIndex.get(word) || exactIndex.get(toSimp(word)) || [];
     if (!idxs.length) {
-      out.innerHTML = '<p class="muted">No exact dictionary entry for “' + esc(word) + '”. See sentences below, or check the character breakdown:</p>' +
-        word.split('').map(charRowHtml).join('');
+      var noEntry = '<p class="muted">No exact dictionary entry for “' + esc(word) + '”.' +
+        (word.length > 1 ? ' See sentences below, or check the character breakdown:' : '') + '</p>';
+      if (word.length === 1) {
+        var info = charInfo(word);
+        if (info && info[6]) noEntry += '<div class="entry"><div class="head"><span class="hz">' + esc(word) + '</span></div><p class="def">' + esc(info[6]) + '</p></div>';
+        noEntry += originHtml(word);
+      }
+      out.innerHTML = noEntry + (word.length > 1 ? word.split('').map(charRowHtml).join('') : '');
     } else {
       out.innerHTML = idxs.map(function (i) { return entryHtml(dict[i]); }).join('');
       if (word.length > 1) out.innerHTML += word.split('').map(charRowHtml).join('');
     }
     bindSpeakButtons(out);
+    bindPartButtons(out);
     renderSuggestions();
   }
 
@@ -323,7 +365,77 @@
       '<span class="py">' + pinyinHtml(pin) + '</span>' +
       hskBadge(hsk) +
       '<button class="speak" data-say="' + esc(simp) + '" title="Speak">🔊</button>' +
-      '</div><p class="def">' + esc(defs) + '</p></div>';
+      '</div><p class="def">' + esc(defs) + '</p>' +
+      (simp.length === 1 ? originHtml(simp) : '') +
+      '</div>';
+  }
+
+  // --- character origin story + component breakdown (makemeahanzi data)
+  var ETY_LABEL = {
+    pictographic: 'Pictograph — a drawing of the thing itself',
+    ideographic: 'Ideograph — meanings combined into a new idea',
+    pictophonetic: 'Phono-semantic — one part gives the meaning, the other the sound'
+  };
+
+  function charInfo(ch) {
+    if (!chars) return null;
+    return chars[ch] || chars[toSimp(ch)] || null;
+  }
+
+  function gloss(ch) {
+    var idxs = exactIndex.get(ch) || exactIndex.get(toSimp(ch)) || [];
+    if (idxs.length) {
+      var row = dict[idxs[0]];
+      for (var i = 0; i < idxs.length; i++) {
+        if (!/[A-Z]/.test(dict[idxs[i]][2])) { row = dict[idxs[i]]; break; }
+      }
+      var py = row[2].split(/\s+/).map(function (s) { return syllableToMark(s).text; }).join(' ');
+      var parts = row[3].split(';');
+      var d = parts[0];
+      for (var j = 0; j < parts.length; j++) {
+        if (!/^\s*(surname |CL:|old variant|variant of)/.test(parts[j])) { d = parts[j].trim(); break; }
+      }
+      if (d.length > 28) d = d.slice(0, 28) + '…';
+      return py + ' · ' + d;
+    }
+    var info = charInfo(ch);
+    if (info && info[6]) return info[6].split(';')[0];
+    return '';
+  }
+
+  function originHtml(ch) {
+    var info = charInfo(ch);
+    if (!info) return '';
+    var ety = info[0], hint = info[1], sem = info[2], pho = info[3], comps = info[4];
+    var html = '';
+    if (ety) {
+      html += '<p class="origin-story"><span class="origin-type">' + esc(ETY_LABEL[ety] || ety) + '</span>';
+      if (hint) html += '<br>' + esc(hint);
+      if (ety === 'pictophonetic' && (sem || pho)) {
+        html += '<br>' +
+          (sem ? '<b>' + esc(sem) + '</b> gives the meaning' : '') +
+          (sem && pho ? ', ' : '') +
+          (pho ? '<b>' + esc(pho) + '</b> gives the sound' : '') + '.';
+      }
+      html += '</p>';
+    }
+    if (comps && comps.length > 1) {
+      html += '<div class="origin-parts"><span class="origin-eq">' + esc(ch) + ' =</span>';
+      for (var i = 0; i < comps.length; i++) {
+        html += '<button class="part" data-part="' + esc(comps[i]) + '">' +
+          '<span class="part-hz">' + esc(comps[i]) + '</span>' +
+          '<span class="part-gloss">' + esc(gloss(comps[i]) || '') + '</span></button>';
+      }
+      html += '</div>';
+    }
+    if (!html) return '';
+    return '<div class="origin">' + html + '</div>';
+  }
+
+  function bindPartButtons(scope) {
+    scope.querySelectorAll('.part').forEach(function (b) {
+      b.addEventListener('click', function () { setWord(b.getAttribute('data-part')); });
+    });
   }
 
   function bindSpeakButtons(scope) {

@@ -1,5 +1,5 @@
 /* Cache-first service worker: app works fully offline after first load. */
-var VERSION = 'xiezi-v1';
+var VERSION = 'xiezi-v3';
 var ASSETS = [
   './',
   'index.html',
@@ -7,7 +7,9 @@ var ASSETS = [
   'js/app.js',
   'lib/hanzilookup.min.js',
   'data/mmah.json',
+  'data/orig.json',
   'data/dict.json',
+  'data/chars.json',
   'data/sentences.json',
   'manifest.webmanifest',
   'icons/icon-180.png',
