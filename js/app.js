@@ -219,30 +219,57 @@
     el.style.display = msg ? '' : 'none';
   }
 
-  // recognition
-  HanziLookup.init('mmah', 'data/mmah.json', function (ok) {
-    recognizerReady = !!ok;
-    setPadStatus(recognizerReady ? '' : 'recognizer failed to load');
+  // recognition: two independent stroke datasets, results merged for accuracy
+  var DATASETS = [['mmah', 'data/mmah.json'], ['orig', 'data/orig.json']];
+  var loadedSets = [];
+  var initDone = 0;
+  DATASETS.forEach(function (ds) {
+    HanziLookup.init(ds[0], ds[1], function (ok) {
+      initDone++;
+      if (ok) loadedSets.push(ds[0]);
+      recognizerReady = loadedSets.length > 0;
+      if (recognizerReady) setPadStatus(strokes.length ? '' : '');
+      else if (initDone === DATASETS.length) setPadStatus('recognizer failed to load');
+      if (recognizerReady && strokes.length) recognize();
+    });
   });
 
+  var recogSeq = 0;
   function recognize() {
     if (!recognizerReady) { setPadStatus('recognizer still loading…'); return; }
     setPadStatus('');
+    var seq = ++recogSeq;
     var analyzed = new HanziLookup.AnalyzedCharacter(strokes);
-    new HanziLookup.Matcher('mmah').match(analyzed, 8, function (matches) {
-      var box = $('candidates');
-      box.innerHTML = '';
-      (matches || []).forEach(function (m) {
-        var b = document.createElement('button');
-        b.textContent = m.character;
-        b.addEventListener('click', function () {
-          setWord(word + m.character);
-          clearPad();
+    var pending = loadedSets.length;
+    var best = new Map();
+    loadedSets.forEach(function (name) {
+      new HanziLookup.Matcher(name).match(analyzed, 12, function (matches) {
+        (matches || []).forEach(function (m) {
+          if (!best.has(m.character) || m.score > best.get(m.character)) {
+            best.set(m.character, m.score);
+          }
         });
-        box.appendChild(b);
+        if (--pending === 0 && seq === recogSeq) showCandidates(best);
       });
-      if (!matches || !matches.length) setPadStatus('no match — try again');
     });
+  }
+
+  function showCandidates(best) {
+    var ranked = Array.from(best.entries())
+      .sort(function (a, b) { return b[1] - a[1]; })
+      .slice(0, 10);
+    var box = $('candidates');
+    box.innerHTML = '';
+    ranked.forEach(function (entry) {
+      var b = document.createElement('button');
+      b.textContent = entry[0];
+      b.addEventListener('click', function () {
+        setWord(word + entry[0]);
+        clearPad();
+      });
+      box.appendChild(b);
+    });
+    if (!ranked.length) setPadStatus('no match — try again');
   }
 
   sizePad();

@@ -103,7 +103,7 @@ button.wide { width: 100%; margin-top: 8px; }
 .pad-head h2 { margin: 0; }
 .pad-wrap { position: relative; display: flex; justify-content: center; }
 #pad {
-  width: min(100%, 320px); aspect-ratio: 1;
+  width: min(100%, 380px); aspect-ratio: 1;
   border: 2px solid var(--line); border-radius: 14px;
   touch-action: none;
   background:
