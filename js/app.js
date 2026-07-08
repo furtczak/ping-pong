@@ -1131,10 +1131,48 @@
     box.innerHTML = '';
     q.options.forEach(function (opt) {
       var b = document.createElement('button');
-      b.textContent = opt;
+      b.className = 'opt-main';
+      b.setAttribute('data-v', opt);
+      var r = q.type === 'blank' ? bestRow(opt) : null;
+      if (r) {
+        // Chinese word answer: hanzi + pinyin, meaning behind a show/hide toggle
+        b.innerHTML = '<span class="opt-hz">' + esc(opt) + '</span>' +
+          '<span class="opt-py">' + pinyinHtml(r[2]) + '</span>' +
+          '<span class="opt-gloss" hidden>— ' + esc(rowGloss(r)) + '</span>';
+      } else {
+        b.textContent = opt;
+      }
       b.addEventListener('click', function () { answerQuiz(b, opt); });
-      box.appendChild(b);
+      if (r) {
+        var rowEl = document.createElement('div');
+        rowEl.className = 'quiz-opt';
+        rowEl.appendChild(b);
+        var ib = document.createElement('button');
+        ib.className = 'opt-info';
+        ib.textContent = 'show';
+        ib.title = 'Show / hide what this answer means';
+        ib.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          var g = b.querySelector('.opt-gloss');
+          g.hidden = !g.hidden;
+          ib.textContent = g.hidden ? 'show' : 'hide';
+        });
+        rowEl.appendChild(ib);
+        box.appendChild(rowEl);
+      } else {
+        box.appendChild(b);
+      }
     });
+  }
+
+  function rowGloss(row) {
+    var parts = row[3].split(';');
+    var d = parts[0];
+    for (var j = 0; j < parts.length; j++) {
+      if (!/^\s*(surname |CL:|old variant|variant of)/.test(parts[j])) { d = parts[j].trim(); break; }
+    }
+    if (d.length > 42) d = d.slice(0, 42) + '…';
+    return d;
   }
 
   function answerQuiz(btn, opt) {
@@ -1142,10 +1180,13 @@
     qz.answered = true;
     var q = qz.cur;
     var good = opt === q.correct;
-    $('quizAnswers').querySelectorAll('button').forEach(function (b) {
+    $('quizAnswers').querySelectorAll('button[data-v]').forEach(function (b) {
       b.disabled = true;
-      if (b.textContent === q.correct) b.classList.add('good');
+      if (b.getAttribute('data-v') === q.correct) b.classList.add('good');
     });
+    // reveal every answer's meaning once answered
+    $('quizAnswers').querySelectorAll('.opt-gloss').forEach(function (g) { g.hidden = false; });
+    $('quizAnswers').querySelectorAll('.opt-info').forEach(function (ib) { ib.textContent = 'hide'; });
     if (good) {
       qz.solved++;
       if (!q.retry) qz.firstTry++;

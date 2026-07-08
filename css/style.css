@@ -257,6 +257,15 @@ button.primary { background: var(--ink); color: var(--card); border-color: var(-
 .quiz-answers button {
   text-align: left; padding: 12px; font-size: 17px; border-radius: 12px; background: var(--bg);
 }
+.quiz-opt { display: flex; gap: 8px; align-items: stretch; }
+.quiz-opt .opt-main { flex: 1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.opt-hz { font-size: 21px; }
+.opt-py { font-weight: 600; font-size: 15px; }
+.opt-gloss { color: var(--muted); font-size: 13px; }
+.opt-info {
+  flex: none; align-self: center; font-size: 12px; color: var(--muted);
+  background: var(--bg); border-radius: 10px; padding: 8px 10px;
+}
 .quiz-answers button.good { border-color: var(--tone2); color: var(--tone2); font-weight: 700; background: transparent; }
 .quiz-answers button.bad { border-color: var(--tone1); color: var(--tone1); background: transparent; }
 .quiz-answers button:disabled { opacity: .9; }
