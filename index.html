@@ -24,9 +24,11 @@
 
 <main>
 <nav class="tabs">
-  <button data-tab="dict" class="active">✍️ Dictionary</button>
-  <button data-tab="cards">🃏 Flashcards</button>
-  <button data-tab="quiz">🎯 Quiz</button>
+  <button data-tab="dict" class="active">✍️<span>Write</span></button>
+  <button data-tab="cards">🃏<span>Cards</span></button>
+  <button data-tab="quiz">🎯<span>Quiz</span></button>
+  <button data-tab="talk">💬<span>Talk</span></button>
+  <button data-tab="words">📚<span>Words</span></button>
 </nav>
 
 <div id="tab-dict">
@@ -152,6 +154,40 @@
     <p id="quizStats"></p>
     <div id="quizReview"></div>
     <button class="primary wide" id="quizNew">New quiz</button>
+  </section>
+</div>
+
+<div id="tab-talk" hidden>
+  <section class="card">
+    <h2>Everyday dialogues</h2>
+    <p class="muted">Real conversations with phrases Chinese people use every day. Tap 🔊 to hear a line, tap any word chip to look it up in the dictionary.</p>
+    <div class="dlg-toggles">
+      <label class="toggle"><input type="checkbox" id="dlgPinyin" checked> pinyin</label>
+      <label class="toggle"><input type="checkbox" id="dlgSplit"> word split</label>
+      <label class="toggle"><input type="checkbox" id="dlgEn" checked> English</label>
+    </div>
+    <div id="dlgList" class="dlg-list"></div>
+    <div id="dlgView" hidden>
+      <button id="dlgBack" class="ghost small">← All dialogues</button>
+      <h3 id="dlgTitle"></h3>
+      <div id="dlgLines" class="dlg-lines"></div>
+    </div>
+    <p class="muted" id="dlgNote" hidden>Loading dialogues…</p>
+  </section>
+</div>
+
+<div id="tab-words" hidden>
+  <section class="card">
+    <h2>Word list</h2>
+    <p class="muted">The most useful words first — sorted by how often they appear in real sentences. Hide the meanings to test yourself; tap a word to open it in the dictionary.</p>
+    <h3>Level</h3>
+    <div class="opt-row" id="wordsLevel"></div>
+    <div class="dlg-toggles">
+      <button class="ghost small" id="wordsShowAll">Show all meanings</button>
+      <button class="ghost small" id="wordsHideAll">Hide all</button>
+    </div>
+    <div id="wordsList" class="words-list"></div>
+    <button id="wordsMore" class="wide ghost" hidden>Show more</button>
   </section>
 </div>
 

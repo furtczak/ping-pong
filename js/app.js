@@ -6,6 +6,7 @@
 
   // ---------------------------------------------------------------- state
   var dict = null;          // rows: [simp, trad, pinyin, defs, usage, hsk]
+  var dialogs = null;       // everyday dialogues [{e, t, d, lines: [[who, zh, en]]}]
   var chars = null;         // char -> [etyType, hint, semantic, phonetic, components, radical]
   var medians = null;       // char -> encoded stroke medians (shape matching + stroke-order animation)
   var shapeBuckets = null;  // strokeCount -> [[char, normalized strokes], ...]
@@ -69,8 +70,8 @@
   var loadSteps = 0;
   function step() {
     loadSteps++;
-    loadbar.style.width = (loadSteps / 5 * 100) + '%';
-    if (loadSteps >= 5) setTimeout(function () { loadbar.remove(); }, 600);
+    loadbar.style.width = (loadSteps / 6 * 100) + '%';
+    if (loadSteps >= 6) setTimeout(function () { loadbar.remove(); }, 600);
   }
 
   fetch('data/dict.json')
@@ -95,6 +96,13 @@
       chars = map;
       step();
       refresh();
+      return fetch('data/dialogs.json');
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (list) {
+      dialogs = list;
+      renderDlgList();
+      step();
       return fetch('data/sentences.json');
     })
     .then(function (r) { return r.json(); })
@@ -807,15 +815,19 @@
   });
 
   // ---------------------------------------------------------------- tabs
-  document.querySelectorAll('.tabs button').forEach(function (b) {
-    b.addEventListener('click', function () {
-      document.querySelectorAll('.tabs button').forEach(function (x) { x.classList.remove('active'); });
-      b.classList.add('active');
-      ['dict', 'cards', 'quiz'].forEach(function (t) {
-        $('tab-' + t).hidden = t !== b.getAttribute('data-tab');
-      });
-    });
+  var TABS = Array.prototype.map.call(document.querySelectorAll('.tabs button'), function (b) {
+    return b.getAttribute('data-tab');
   });
+  document.querySelectorAll('.tabs button').forEach(function (b) {
+    b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); });
+  });
+  function showTab(tab) {
+    document.querySelectorAll('.tabs button').forEach(function (x) {
+      x.classList.toggle('active', x.getAttribute('data-tab') === tab);
+    });
+    TABS.forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    if (tab === 'words') renderWords(false);
+  }
 
   // ---------------------------------------------------------------- learn: shared helpers
   function shuffle(a) {
@@ -880,16 +892,14 @@
   }
 
   function hskPool(level) {
-    var seen = {};
-    var pool = [];
+    var best = new Map(); // word -> row with the richest definition (main reading)
     for (var i = 0; i < dict.length; i++) {
       var row = dict[i];
-      if (row[5] === level && !seen[row[0]] && !/[A-Z]/.test(row[2])) {
-        seen[row[0]] = true;
-        pool.push(row);
-      }
+      if (row[5] !== level || /[A-Z]/.test(row[2])) continue;
+      var cur = best.get(row[0]);
+      if (!cur || row[3].length > cur[3].length) best.set(row[0], row);
     }
-    return pool;
+    return Array.from(best.values());
   }
 
   function levelButtons(containerId, def) {
@@ -1245,6 +1255,159 @@
   $('quizNew').addEventListener('click', function () {
     $('quizDone').hidden = true; $('quizSetup').hidden = false;
   });
+
+  // ---------------------------------------------------------------- talk: everyday dialogues
+  function renderDlgList() {
+    var box = $('dlgList');
+    box.innerHTML = '';
+    dialogs.forEach(function (dlg, i) {
+      var b = document.createElement('button');
+      b.className = 'dlg-item';
+      b.innerHTML = '<span class="em">' + dlg.e + '</span><span><b>' + esc(dlg.t) + '</b><small>' + esc(dlg.d) + '</small></span>';
+      b.addEventListener('click', function () { openDlg(i); });
+      box.appendChild(b);
+    });
+  }
+
+  function openDlg(i) {
+    var dlg = dialogs[i];
+    $('dlgList').hidden = true;
+    $('dlgView').hidden = false;
+    $('dlgTitle').textContent = dlg.e + ' ' + dlg.t;
+    var box = $('dlgLines');
+    box.innerHTML = '';
+    dlg.lines.forEach(function (line) {
+      var who = line[0], zh = line[1], en = line[2];
+      var div = document.createElement('div');
+      div.className = 'bubble' + (who === 'B' ? ' b' : '');
+      div.innerHTML = '<span class="who">' + (who === 'B' ? '乙 B' : '甲 A') + '</span>' +
+        '<button class="speak" data-say="' + esc(zh) + '">🔊</button>' +
+        '<div class="zh">' + rubyHtml(zh, null) + '</div>' +
+        '<div class="dlg-split">' + hintChipsHtml(zh, true) + '</div>' +
+        '<div class="dlg-en">' + esc(en) + '</div>';
+      box.appendChild(div);
+    });
+    bindSpeakButtons(box);
+    applyDlgToggles();
+  }
+
+  $('dlgBack').addEventListener('click', function () {
+    $('dlgView').hidden = true;
+    $('dlgList').hidden = false;
+  });
+
+  function applyDlgToggles() {
+    var lines = $('dlgLines');
+    lines.classList.toggle('nopy', !$('dlgPinyin').checked);
+    lines.classList.toggle('split', $('dlgSplit').checked);
+    lines.classList.toggle('noen', !$('dlgEn').checked);
+  }
+  ['dlgPinyin', 'dlgSplit', 'dlgEn'].forEach(function (id) {
+    $(id).addEventListener('change', applyDlgToggles);
+  });
+
+  // tap a word chip in a dialogue -> look it up in the dictionary tab
+  $('dlgLines').addEventListener('click', function (ev) {
+    var chip = ev.target.closest('.hint-chip');
+    if (!chip) return;
+    var hz = chip.querySelector('.hz');
+    if (!hz || !/[㐀-鿿]/.test(hz.textContent)) return;
+    setWord(hz.textContent);
+    showTab('dict');
+  });
+
+  // ---------------------------------------------------------------- words list
+  var wl = { rows: [], shown: 0 };
+
+  (function () {
+    var box = $('wordsLevel');
+    var opts = [['0', 'Top'], ['1', 'HSK 1'], ['2', 'HSK 2'], ['3', 'HSK 3'], ['4', 'HSK 4'], ['5', 'HSK 5'], ['6', 'HSK 6']];
+    opts.forEach(function (o, i) {
+      var b = document.createElement('button');
+      b.textContent = o[1];
+      b.setAttribute('data-v', o[0]);
+      if (i === 0) b.classList.add('sel');
+      box.appendChild(b);
+    });
+    selectable(box);
+    box.addEventListener('click', function (ev) {
+      if (ev.target.closest('button')) renderWords(true);
+    });
+  })();
+
+  function wordPool(level) {
+    if (level > 0) {
+      return hskPool(level).sort(function (a, b) { return b[4] - a[4]; });
+    }
+    // Top: most frequent words in the sentence corpus
+    var seen = {};
+    var rows = [];
+    for (var i = 0; i < dict.length; i++) {
+      var r = dict[i];
+      if (r[4] > 0 && !seen[r[0]] && !/[A-Z]/.test(r[2])) {
+        seen[r[0]] = true;
+        rows.push(r);
+      }
+    }
+    rows.sort(function (a, b) { return b[4] - a[4]; });
+    return rows.slice(0, 500);
+  }
+
+  function renderWords(reset) {
+    if (!dict) return;
+    if (reset || !wl.rows.length) {
+      wl.rows = wordPool(selectedVal('wordsLevel'));
+      wl.shown = 0;
+      $('wordsList').innerHTML = '';
+    }
+    var box = $('wordsList');
+    var end = Math.min(wl.shown + 40, wl.rows.length);
+    for (var i = wl.shown; i < end; i++) {
+      box.appendChild(wordRowEl(wl.rows[i]));
+    }
+    wl.shown = end;
+    $('wordsMore').hidden = wl.shown >= wl.rows.length;
+  }
+
+  function wordRowEl(row) {
+    var div = document.createElement('div');
+    div.className = 'word-row';
+    var main = document.createElement('button');
+    main.className = 'opt-main';
+    main.innerHTML = '<span class="opt-hz">' + esc(row[0]) + '</span>' +
+      '<span class="opt-py">' + pinyinHtml(row[2]) + '</span>' +
+      (row[5] ? '<span class="badge">HSK ' + row[5] + '</span>' : '') +
+      '<span class="opt-gloss" hidden>— ' + esc(rowGloss(row)) + '</span>';
+    main.title = 'Open in dictionary';
+    main.addEventListener('click', function () {
+      setWord(row[0]);
+      showTab('dict');
+    });
+    var sp = document.createElement('button');
+    sp.className = 'speak';
+    sp.textContent = '🔊';
+    sp.addEventListener('click', function () { speak(row[0]); });
+    var ib = document.createElement('button');
+    ib.className = 'opt-info';
+    ib.textContent = 'show';
+    ib.addEventListener('click', function () {
+      var g = main.querySelector('.opt-gloss');
+      g.hidden = !g.hidden;
+      ib.textContent = g.hidden ? 'show' : 'hide';
+    });
+    div.appendChild(main);
+    div.appendChild(sp);
+    div.appendChild(ib);
+    return div;
+  }
+
+  $('wordsMore').addEventListener('click', function () { renderWords(false); });
+  $('wordsShowAll').addEventListener('click', function () { setAllGlosses(false); });
+  $('wordsHideAll').addEventListener('click', function () { setAllGlosses(true); });
+  function setAllGlosses(hide) {
+    $('wordsList').querySelectorAll('.opt-gloss').forEach(function (g) { g.hidden = hide; });
+    $('wordsList').querySelectorAll('.opt-info').forEach(function (b) { b.textContent = hide ? 'show' : 'hide'; });
+  }
 
   // ---------------------------------------------------------------- PWA
   if ('serviceWorker' in navigator) {
