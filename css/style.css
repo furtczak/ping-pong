@@ -302,6 +302,23 @@ button.primary { background: var(--ink); color: var(--card); border-color: var(-
 .bubble .speak { float: right; margin-left: 6px; }
 .bubble .who { font-size: 11px; font-weight: 700; color: var(--muted); }
 
+/* Speech practice */
+.typebar { display: flex; gap: 8px; }
+.typebar input { flex: 1; }
+button.mic { font-size: 17px; }
+button.mic.listening { animation: micpulse 1s infinite; }
+@keyframes micpulse { 50% { transform: scale(1.25); } }
+@media (prefers-reduced-motion: reduce) { button.mic.listening { animation: none; } }
+.say-fb {
+  margin-top: 8px; padding: 8px 10px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+}
+.say-score { font-weight: 700; font-size: 14px; }
+.say-target { font-size: 22px; letter-spacing: 2px; margin: 2px 0; }
+.say-ok { color: var(--tone2); }
+.say-bad { color: var(--tone1); text-decoration: underline; }
+.say-heard { font-size: 12px; color: var(--muted); }
+
 /* Word list */
 .words-list { display: grid; gap: 8px; }
 .word-row { display: flex; gap: 8px; align-items: stretch; }
