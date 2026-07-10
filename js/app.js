@@ -1256,6 +1256,133 @@
     $('quizDone').hidden = true; $('quizSetup').hidden = false;
   });
 
+  // ---------------------------------------------------------------- speech recognition (say it like Duolingo)
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+  function listenZh(onResult, onError) {
+    var rec = new SR();
+    rec.lang = 'zh-CN';
+    rec.interimResults = false;
+    rec.maxAlternatives = 5;
+    rec.onresult = function (ev) {
+      var alts = [];
+      var res = ev.results[0];
+      for (var i = 0; i < res.length; i++) alts.push(res[i].transcript);
+      onResult(alts);
+    };
+    rec.onerror = function (ev) { onError(ev.error || 'error'); };
+    rec.onend = function () { onError && onError(null); }; // fires after result too; guarded by caller
+    try { rec.start(); } catch (e) { onError('busy'); }
+    return rec;
+  }
+
+  // pinyin syllables (with tone) for the Chinese characters of a string
+  function sylsOf(zh) {
+    var out = [];
+    for (var i = 0; i < zh.length; i++) {
+      var ch = zh[i];
+      if (!/[㐀-鿿]/.test(ch)) continue;
+      var py = charPinyin.get(ch) || charPinyin.get(toSimp(ch)) || '';
+      out.push({ ch: ch, py: py.split(/\s+/)[0].toLowerCase() });
+    }
+    return out;
+  }
+
+  // longest common subsequence over pinyin syllables -> which target chars were said right
+  function matchSpeech(target, heard) {
+    var a = sylsOf(target), b = sylsOf(heard);
+    var n = a.length, m = b.length;
+    var dp = [];
+    for (var i = 0; i <= n; i++) { dp.push(new Array(m + 1).fill(0)); }
+    for (i = 1; i <= n; i++) {
+      for (var j = 1; j <= m; j++) {
+        dp[i][j] = a[i - 1].py && a[i - 1].py === b[j - 1].py
+          ? dp[i - 1][j - 1] + 1
+          : Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+    var ok = new Array(n).fill(false);
+    i = n; var j2 = m;
+    while (i > 0 && j2 > 0) {
+      if (a[i - 1].py && a[i - 1].py === b[j2 - 1].py && dp[i][j2] === dp[i - 1][j2 - 1] + 1) {
+        ok[i - 1] = true; i--; j2--;
+      } else if (dp[i - 1][j2] >= dp[i][j2 - 1]) i--;
+      else j2--;
+    }
+    return { syls: a, ok: ok, score: n ? Math.round(100 * dp[n][m] / n) : 0 };
+  }
+
+  function speechFeedbackHtml(target, alts) {
+    var best = null;
+    alts.forEach(function (t) {
+      var r = matchSpeech(target, t);
+      if (!best || r.score > best.r.score) best = { t: t, r: r };
+    });
+    if (!best) return '';
+    var r = best.r;
+    var colored = r.syls.map(function (s, i) {
+      return '<span class="' + (r.ok[i] ? 'say-ok' : 'say-bad') + '">' + esc(s.ch) + '</span>';
+    }).join('');
+    var verdict = r.score >= 90 ? 'Excellent! 🎉' : r.score >= 70 ? 'Good! 👍' : r.score >= 40 ? 'Keep practicing 💪' : 'Try again 🙂';
+    return '<div class="say-score">' + r.score + '% — ' + verdict + '</div>' +
+      '<div class="say-target">' + colored + '</div>' +
+      '<div class="say-heard">We heard: ' + esc(best.t || '…') + '</div>';
+  }
+
+  function attachMic(btn, getTarget, fbBox) {
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('listening')) return;
+      btn.classList.add('listening');
+      btn.textContent = '👂';
+      var done = false;
+      listenZh(function (alts) {
+        done = true;
+        btn.classList.remove('listening');
+        btn.textContent = '🎤';
+        fbBox.hidden = false;
+        fbBox.innerHTML = speechFeedbackHtml(getTarget(), alts);
+      }, function (err) {
+        if (done) return;
+        btn.classList.remove('listening');
+        btn.textContent = '🎤';
+        if (err === null) return; // plain end without result
+        done = true;
+        fbBox.hidden = false;
+        fbBox.innerHTML = '<div class="say-heard">' +
+          (err === 'not-allowed' || err === 'service-not-allowed'
+            ? 'Microphone access was blocked — allow it in your browser settings.'
+            : err === 'no-speech' ? 'We didn’t hear anything — try again closer to the microphone.'
+            : 'Speech recognition failed (' + esc(String(err)) + '). Try again.') + '</div>';
+      });
+    });
+  }
+
+  // mic in the dictionary tab: speak a word instead of typing it
+  if (SR) {
+    $('micInput').hidden = false;
+    var micFb = document.createElement('div');
+    $('micInput').addEventListener('click', function () {
+      var btn = $('micInput');
+      if (btn.classList.contains('listening')) return;
+      btn.classList.add('listening');
+      btn.textContent = '👂';
+      var done = false;
+      listenZh(function (alts) {
+        done = true;
+        btn.classList.remove('listening');
+        btn.textContent = '🎤';
+        var zh = (alts[0] || '').replace(/[^㐀-鿿]/g, '');
+        if (zh) setWord(zh.slice(0, 8));
+      }, function (err) {
+        if (done || err === null) return;
+        btn.classList.remove('listening');
+        btn.textContent = '🎤';
+      });
+    });
+  } else {
+    $('srNote').hidden = false;
+  }
+
   // ---------------------------------------------------------------- talk: everyday dialogues
   function renderDlgList() {
     var box = $('dlgList');
@@ -1281,11 +1408,14 @@
       var div = document.createElement('div');
       div.className = 'bubble' + (who === 'B' ? ' b' : '');
       div.innerHTML = '<span class="who">' + (who === 'B' ? '乙 B' : '甲 A') + '</span>' +
+        (SR ? '<button class="speak mic">🎤</button>' : '') +
         '<button class="speak" data-say="' + esc(zh) + '">🔊</button>' +
         '<div class="zh">' + rubyHtml(zh, null) + '</div>' +
         '<div class="dlg-split">' + hintChipsHtml(zh, true) + '</div>' +
-        '<div class="dlg-en">' + esc(en) + '</div>';
+        '<div class="dlg-en">' + esc(en) + '</div>' +
+        '<div class="say-fb" hidden></div>';
       box.appendChild(div);
+      if (SR) attachMic(div.querySelector('.mic'), function () { return zh; }, div.querySelector('.say-fb'));
     });
     bindSpeakButtons(box);
     applyDlgToggles();

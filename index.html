@@ -44,6 +44,7 @@
     </div>
     <div class="typebar">
       <input id="typeInput" type="text" inputmode="text" placeholder="…or type / paste characters (e.g. 我爱你)" autocomplete="off">
+      <button id="micInput" class="ghost mic" title="Say it in Chinese" hidden>🎤</button>
     </div>
   </section>
 
@@ -160,7 +161,8 @@
 <div id="tab-talk" hidden>
   <section class="card">
     <h2>Everyday dialogues</h2>
-    <p class="muted">Real conversations with phrases Chinese people use every day. Tap 🔊 to hear a line, tap any word chip to look it up in the dictionary.</p>
+    <p class="muted">Real conversations with phrases Chinese people use every day. Tap 🔊 to hear a line, 🎤 to say it yourself and get pronunciation feedback, and tap any word chip to look it up in the dictionary.</p>
+    <p class="muted" id="srNote" hidden>🎤 Speech recognition isn't available in this browser — try Safari on iPhone or Chrome.</p>
     <div class="dlg-toggles">
       <label class="toggle"><input type="checkbox" id="dlgPinyin" checked> pinyin</label>
       <label class="toggle"><input type="checkbox" id="dlgSplit"> word split</label>
