@@ -1515,8 +1515,117 @@
 
   // ---------------------------------------------------------------- free conversation practice
   // steps: q = assistant's question [zh, en]; s = suggested answers [zh, en, assistant reaction]
+  // lvl: 1 = HSK 1 vocabulary, 2 = HSK 2, 3 = HSK 3+
   var PRACTICE = [
-    { e: '☀️', t: 'Weather & plans', steps: [
+    { e: '👋', t: 'First meeting', lvl: 1, steps: [
+      { q: ['你好！你叫什么名字？', 'Hello! What is your name?'], s: [
+        ['我叫安娜。', 'My name is Anna.', '你好，安娜！'],
+        ['我叫马克。', 'My name is Marek.', '你好，马克！'],
+        ['你好，我叫小王。', 'Hi, my name is Xiao Wang.', '小王，很高兴认识你！']] },
+      { q: ['你是哪国人？', 'Which country are you from?'], s: [
+        ['我是波兰人。', 'I am Polish.', '波兰很漂亮！'],
+        ['我是中国人。', 'I am Chinese.', '太好了！'],
+        ['我是美国人。', 'I am American.', '很好！']] },
+      { q: ['你多大了？', 'How old are you?'], s: [
+        ['我二十岁。', 'I am twenty.', '你很年轻！'],
+        ['我三十岁。', 'I am thirty.', '很好的年纪！'],
+        ['我十八岁。', 'I am eighteen.', '真年轻！']] },
+      { q: ['你是学生吗？', 'Are you a student?'], s: [
+        ['是，我是学生。', 'Yes, I am a student.', '学习加油！'],
+        ['不是，我工作。', 'No, I work.', '工作辛苦了！'],
+        ['我是老师。', 'I am a teacher.', '老师好！']] },
+      { q: ['认识你很高兴！再见！', 'Nice to meet you! Goodbye!'], end: true }] },
+    { e: '🍎', t: 'Eating & drinking', lvl: 1, steps: [
+      { q: ['你好！你喜欢吃什么？', 'Hi! What do you like to eat?'], s: [
+        ['我喜欢吃米饭。', 'I like rice.', '我也喜欢！'],
+        ['我喜欢吃苹果。', 'I like apples.', '苹果很好吃！'],
+        ['我喜欢吃菜。', 'I like vegetables.', '很健康！']] },
+      { q: ['你喜欢喝茶吗？', 'Do you like drinking tea?'], s: [
+        ['喜欢，我喜欢喝茶。', 'Yes, I like tea.', '中国茶很有名！'],
+        ['不喜欢，我喜欢喝水。', 'No, I like water.', '多喝水很好！'],
+        ['我喜欢喝咖啡。', 'I like coffee.', '我也爱喝咖啡！']] },
+      { q: ['你今天吃饭了吗？', 'Have you eaten today?'], s: [
+        ['吃了。', 'Yes, I have.', '很好！'],
+        ['还没吃。', 'Not yet.', '快去吃饭吧！'],
+        ['我在吃饭。', 'I am eating now.', '慢慢吃！']] },
+      { q: ['你会做饭吗？', 'Can you cook?'], s: [
+        ['我会做饭。', 'I can cook.', '真棒！'],
+        ['我不会做饭。', 'I cannot cook.', '没关系！'],
+        ['我妈妈会做饭。', 'My mum can cook.', '哈哈，妈妈做的饭最好吃！']] },
+      { q: ['好，我们下次一起吃饭！再见！', 'OK, let us eat together next time! Bye!'], end: true }] },
+    { e: '🏠', t: 'Family & every day', lvl: 1, steps: [
+      { q: ['你好！你家有几口人？', 'Hi! How many people are in your family?'], s: [
+        ['我家有三口人。', 'There are three people in my family.', '很好！'],
+        ['我家有四口人。', 'There are four people in my family.', '真好！'],
+        ['我家有五口人。', 'There are five people in my family.', '大家庭！']] },
+      { q: ['你有猫吗？', 'Do you have a cat?'], s: [
+        ['有，我有一只猫。', 'Yes, I have a cat.', '小猫很可爱！'],
+        ['没有，我有一只狗。', 'No, I have a dog.', '小狗也很可爱！'],
+        ['我没有猫。', 'I do not have a cat.', '好的！']] },
+      { q: ['你几点睡觉？', 'What time do you go to sleep?'], s: [
+        ['我十一点睡觉。', 'I go to sleep at eleven.', '早点儿睡！'],
+        ['我十点睡觉。', 'I go to sleep at ten.', '很好！'],
+        ['我十二点睡觉。', 'I go to sleep at twelve.', '太晚了！']] },
+      { q: ['你喜欢看书吗？', 'Do you like reading books?'], s: [
+        ['喜欢，我喜欢看书。', 'Yes, I like reading.', '看书很好！'],
+        ['不喜欢，我喜欢看电视。', 'No, I like watching TV.', '哈哈，好的！'],
+        ['我喜欢看电影。', 'I like watching movies.', '我也是！']] },
+      { q: ['今天很开心！再见！', 'That was fun! Goodbye!'], end: true }] },
+    { e: '💼', t: 'Work & plans', lvl: 3, steps: [
+      { q: ['你好！最近工作忙不忙？', 'Hi! Has work been busy lately?'], s: [
+        ['很忙，每天都要加班。', 'Very busy — I work overtime every day.', '那要注意休息啊！'],
+        ['还好，不太忙。', 'It is OK, not too busy.', '那挺好的。'],
+        ['我最近在找工作。', 'I am looking for a job at the moment.', '祝你早日找到好工作！']] },
+      { q: ['你以后有什么打算？', 'What are your plans for the future?'], s: [
+        ['我打算换一个工作。', 'I plan to change jobs.', '换个环境也许更好。'],
+        ['我想继续学习中文。', 'I want to keep studying Chinese.', '太好了，坚持就是胜利！'],
+        ['我打算去国外工作。', 'I plan to work abroad.', '很勇敢的决定！']] },
+      { q: ['你觉得你的工作有意思吗？', 'Do you find your work interesting?'], s: [
+        ['有意思，我很喜欢。', 'Yes, I really like it.', '喜欢自己的工作最幸福了。'],
+        ['一般，有时候很累。', 'So-so — sometimes it is tiring.', '辛苦了，记得休息。'],
+        ['没意思，我想换工作。', 'Not really, I want to change.', '那就勇敢地去找新机会吧！']] },
+      { q: ['工作和生活，哪个更重要？', 'Which is more important — work or life?'], s: [
+        ['我觉得生活更重要。', 'I think life is more important.', '同意，身体和家人最重要。'],
+        ['工作更重要，因为要赚钱。', 'Work, because you need to earn money.', '有道理，不过也要照顾自己。'],
+        ['都很重要，要平衡。', 'Both matter — you need balance.', '说得好，平衡最难也最重要。']] },
+      { q: ['说得真好！祝你工作顺利！再见！', 'Well said! Good luck with work! Bye!'], end: true }] },
+    { e: '🧳', t: 'Travel stories', lvl: 3, steps: [
+      { q: ['你好！你最近去哪儿旅游了？', 'Hi! Where have you travelled recently?'], s: [
+        ['我上个月去了北京。', 'I went to Beijing last month.', '北京怎么样？给我讲讲！'],
+        ['我去了海边。', 'I went to the seaside.', '海边最舒服了！'],
+        ['我最近没去旅游。', 'I have not travelled recently.', '那下次一定要出去走走！']] },
+      { q: ['你旅游的时候遇到过什么问题吗？', 'Have you run into any problems while travelling?'], s: [
+        ['我丢过护照，特别麻烦。', 'I once lost my passport — a real hassle.', '天啊，那真的很麻烦！'],
+        ['有一次我坐错了火车。', 'Once I took the wrong train.', '哈哈，这也是一种经历！'],
+        ['没有，一切都很顺利。', 'No, everything went smoothly.', '你运气真好！']] },
+      { q: ['你喜欢一个人旅游还是跟朋友一起？', 'Do you prefer travelling alone or with friends?'], s: [
+        ['我喜欢一个人，比较自由。', 'Alone — it is more free.', '一个人旅行确实很自由。'],
+        ['我喜欢跟朋友一起，更热闹。', 'With friends — it is livelier.', '和朋友一起更有意思！'],
+        ['都可以，看情况。', 'Either, depending on the situation.', '你很灵活嘛！']] },
+      { q: ['如果有时间和钱，你最想去哪儿？', 'If you had time and money, where would you go?'], s: [
+        ['我最想去中国的西部。', 'I would love to see western China.', '那里的风景美极了！'],
+        ['我想环游世界。', 'I want to travel around the world.', '好大的梦想，加油！'],
+        ['我想去一个安静的小城市。', 'I would go to a quiet little town.', '安静的地方最适合休息。']] },
+      { q: ['希望你的梦想能实现！再见！', 'I hope your dream comes true! Bye!'], end: true }] },
+    { e: '🥗', t: 'Health & habits', lvl: 3, steps: [
+      { q: ['你好！你平时几点起床？', 'Hi! What time do you usually get up?'], s: [
+        ['我六点半起床，然后去跑步。', 'I get up at 6:30 and go running.', '这么早！你真自律！'],
+        ['我八点起床。', 'I get up at eight.', '不早不晚，刚刚好。'],
+        ['周末我睡到十点。', 'On weekends I sleep till ten.', '哈哈，周末就要好好睡！']] },
+      { q: ['你觉得自己健康吗？', 'Do you think you are healthy?'], s: [
+        ['还可以，我常常锻炼。', 'Quite healthy — I exercise a lot.', '坚持锻炼真不容易！'],
+        ['不太健康，我总是坐着。', 'Not really — I sit all day.', '那要多站起来活动活动。'],
+        ['我在努力变得更健康。', 'I am working on getting healthier.', '加油，一点一点来！']] },
+      { q: ['你晚上一般做什么？', 'What do you usually do in the evening?'], s: [
+        ['我看看书，早点儿睡觉。', 'I read a bit and go to bed early.', '很健康的习惯！'],
+        ['我喜欢看电视或者上网。', 'I like watching TV or going online.', '别看得太晚哦。'],
+        ['我常常学习中文。', 'I often study Chinese.', '哇，太用功了！']] },
+      { q: ['你觉得健康最重要的是什么？', 'What do you think matters most for health?'], s: [
+        ['我觉得是睡觉。', 'I think it is sleep.', '睡得好，一切都好。'],
+        ['是运动和吃得好。', 'Exercise and eating well.', '说得对，两个都重要。'],
+        ['心情好最重要。', 'A good mood matters most.', '同意！开心最重要。']] },
+      { q: ['说得对！祝你身体健康！再见！', 'Right you are! Stay healthy! Bye!'], end: true }] },
+    { e: '☀️', t: 'Weather & plans', lvl: 2, steps: [
       { q: ['你好！今天天气怎么样？', 'Hi! How is the weather today?'], s: [
         ['今天天气很好，很暖和。', 'The weather is great today, nice and warm.', '太好了！我们出去走走吧。'],
         ['今天很冷，还刮风。', 'It is cold today, and windy too.', '那多穿一点儿衣服吧。'],
@@ -1534,7 +1643,7 @@
         ['我有时候游泳。', 'I sometimes swim.', '游泳对身体很好。'],
         ['我不太喜欢运动。', 'I do not really like sports.', '哈哈，没关系，散散步也好。']] },
       { q: ['今天聊得很开心！再见！', 'It was fun talking today! Goodbye!'], end: true }] },
-    { e: '🍜', t: 'Food', steps: [
+    { e: '🍜', t: 'Food', lvl: 2, steps: [
       { q: ['你好！你吃饭了吗？', 'Hi! Have you eaten?'], s: [
         ['吃了，我吃了米饭。', 'Yes, I had rice.', '吃饱了就好。'],
         ['还没吃，我有点儿饿。', 'Not yet, I am a bit hungry.', '那快去吃点儿东西吧！'],
@@ -1552,7 +1661,7 @@
         ['今天不行，明天怎么样？', 'Not today — how about tomorrow?', '好，那明天见！'],
         ['我想在家吃。', 'I would rather eat at home.', '在家吃也很舒服。']] },
       { q: ['好，下次一起吃饭！再见！', 'OK, let us eat together next time! Bye!'], end: true }] },
-    { e: '🙋', t: 'About you', steps: [
+    { e: '🙋', t: 'About you', lvl: 2, steps: [
       { q: ['你好！你叫什么名字？', 'Hello! What is your name?'], s: [
         ['我叫安娜。', 'My name is Anna.', '安娜，很高兴认识你！'],
         ['我叫马克。', 'My name is Marek.', '马克，很高兴认识你！'],
@@ -1570,7 +1679,7 @@
         ['因为工作需要。', 'Because I need it for work.', '会中文对工作很有帮助。'],
         ['因为我想去中国旅游。', 'Because I want to travel to China.', '欢迎你来中国玩！']] },
       { q: ['你的中文很好！加油！再见！', 'Your Chinese is great! Keep it up! Bye!'], end: true }] },
-    { e: '🎬', t: 'Hobbies', steps: [
+    { e: '🎬', t: 'Hobbies', lvl: 2, steps: [
       { q: ['你好！你有什么爱好？', 'Hi! What are your hobbies?'], s: [
         ['我喜欢看电影。', 'I like watching movies.', '我也喜欢！你常去电影院吗？'],
         ['我喜欢听音乐。', 'I like listening to music.', '音乐能让人放松。'],
@@ -1588,7 +1697,7 @@
         ['不好意思，我没有时间。', 'Sorry, I do not have time.', '没关系，下次吧！'],
         ['好主意！', 'Good idea!', '太好了，到时候见！']] },
       { q: ['今天聊得真开心！再见！', 'That was a nice chat! Bye!'], end: true }] },
-    { e: '✈️', t: 'Travel', steps: [
+    { e: '✈️', t: 'Travel', lvl: 2, steps: [
       { q: ['你好！你去过中国吗？', 'Hi! Have you been to China?'], s: [
         ['去过，我去过北京。', 'Yes, I have been to Beijing.', '北京怎么样？好玩吗？'],
         ['没去过，但是我很想去。', 'No, but I really want to go.', '有机会一定要去看看！'],
@@ -1609,7 +1718,26 @@
   ];
 
   var GENERIC_REACTIONS = ['好的，我明白了。', '真的吗？有意思！', '嗯嗯，我知道了。', '哈哈，不错！'];
-  var prax = { scen: null, step: 0, scores: [], answered: 0, busy: false };
+  var prax = { scen: null, step: 0, scores: [], answered: 0, busy: false, lvl: 1, last: null };
+
+  // level picker: the conversation vocabulary range
+  (function () {
+    var box = $('praxLevel');
+    [[1, 'HSK 1'], [2, 'HSK 2'], [3, 'HSK 3+']].forEach(function (o, i) {
+      var b = document.createElement('button');
+      b.textContent = o[1];
+      b.setAttribute('data-v', o[0]);
+      if (i === 0) b.classList.add('sel');
+      box.appendChild(b);
+    });
+    selectable(box);
+    box.addEventListener('click', function (ev) {
+      var b = ev.target.closest('button');
+      if (!b) return;
+      prax.lvl = +b.getAttribute('data-v');
+      startPractice(); // new topic from the chosen level
+    });
+  })();
 
   // speak and call done when the utterance finishes (with a time fallback,
   // since iOS sometimes never fires onend)
@@ -1636,8 +1764,14 @@
     return div;
   }
 
-  function startPractice(scenIdx) {
-    prax.scen = PRACTICE[scenIdx === undefined ? Math.floor(Math.random() * PRACTICE.length) : scenIdx];
+  function startPractice() {
+    var pool = PRACTICE.filter(function (s) { return s.lvl === prax.lvl; });
+    if (pool.length > 1 && prax.last) {
+      var narrowed = pool.filter(function (s) { return s !== prax.last; });
+      if (narrowed.length) pool = narrowed;
+    }
+    prax.scen = pick(pool);
+    prax.last = prax.scen;
     prax.step = 0;
     prax.scores = [];
     prax.answered = 0;
@@ -1645,7 +1779,7 @@
     $('dlgList').hidden = true;
     $('dlgView').hidden = true;
     $('praxView').hidden = false;
-    $('praxTitle').textContent = '🤖 ' + prax.scen.e + ' ' + prax.scen.t;
+    $('praxTitle').textContent = '🤖 ' + prax.scen.e + ' ' + prax.scen.t + ' · HSK ' + (prax.scen.lvl === 3 ? '3+' : prax.scen.lvl);
     $('praxLines').innerHTML = '';
     $('praxText').value = '';
     applyDlgToggles();
