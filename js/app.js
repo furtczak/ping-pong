@@ -1285,6 +1285,7 @@
       else onError('no-speech');
     }
     rec.onresult = function (ev) {
+      if (finished) return;
       var interim = '';
       var finals = [];
       for (var i = 0; i < ev.results.length; i++) {
@@ -1371,23 +1372,29 @@
       '<div class="say-heard">We heard: ' + esc(best.t || '…') + '</div>';
   }
 
+  var IOS_DICTATION_TIP = 'We didn’t hear anything. On iPhone, Chinese speech needs the Chinese ' +
+    'dictation keyboard: Settings → General → Keyboard → turn on Dictation, then ' +
+    'Keyboards → Add New Keyboard → Chinese, Simplified (Pinyin — QWERTY). Then try again.';
+
   function attachMic(btn, getTarget, fbBox) {
+    var current = null;
     btn.addEventListener('click', function () {
       if (!SR) {
         fbBox.hidden = false;
         fbBox.innerHTML = '<div class="say-heard">' + esc(NO_SR_MSG) + '</div>';
         return;
       }
-      if (btn.classList.contains('listening')) return;
+      if (current) { try { current.stop(); } catch (e) {} return; } // second tap = stop
       btn.classList.add('listening');
-      btn.textContent = '👂';
+      btn.textContent = '⏹';
       fbBox.hidden = false;
-      fbBox.innerHTML = '<div class="say-heard">Listening… speak now 🎙️</div>';
+      fbBox.innerHTML = '<div class="say-heard">Listening… 🎙️ speak, then pause or tap ⏹ to finish</div>';
       function reset() {
+        current = null;
         btn.classList.remove('listening');
         btn.textContent = '🎤';
       }
-      listenZh(function (alts) {
+      current = listenZh(function (alts) {
         reset();
         fbBox.innerHTML = speechFeedbackHtml(getTarget(), alts);
       }, function (err) {
@@ -1395,7 +1402,7 @@
         fbBox.innerHTML = '<div class="say-heard">' +
           (err === 'not-allowed' || err === 'service-not-allowed'
             ? 'Microphone access was blocked — allow it in your browser settings.'
-            : err === 'no-speech' ? 'We didn’t hear anything — try again, a bit louder and closer to the phone.'
+            : err === 'no-speech' ? esc(IOS_DICTATION_TIP)
             : 'Speech recognition failed (' + esc(String(err)) + '). Try again.') + '</div>';
       }, function (partial) {
         fbBox.innerHTML = '<div class="say-heard">👂 ' + esc(partial) + '</div>';
@@ -1408,18 +1415,20 @@
     'on desktop use Chrome or Safari.';
 
   // mic in the dictionary tab: speak a word instead of typing it
+  var micRec = null;
   $('micInput').hidden = false;
   $('micInput').addEventListener('click', function () {
     var btn = $('micInput');
     if (!SR) { alert(NO_SR_MSG); return; }
-    if (btn.classList.contains('listening')) return;
+    if (micRec) { try { micRec.stop(); } catch (e) {} return; } // second tap = stop
     btn.classList.add('listening');
-    btn.textContent = '👂';
+    btn.textContent = '⏹';
     function reset() {
+      micRec = null;
       btn.classList.remove('listening');
       btn.textContent = '🎤';
     }
-    listenZh(function (alts) {
+    micRec = listenZh(function (alts) {
       reset();
       var zh = (alts[0] || '').replace(/[^㐀-鿿]/g, '');
       if (zh) setWord(zh.slice(0, 8));
