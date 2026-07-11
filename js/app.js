@@ -1331,6 +1331,11 @@
 
   function attachMic(btn, getTarget, fbBox) {
     btn.addEventListener('click', function () {
+      if (!SR) {
+        fbBox.hidden = false;
+        fbBox.innerHTML = '<div class="say-heard">' + esc(NO_SR_MSG) + '</div>';
+        return;
+      }
       if (btn.classList.contains('listening')) return;
       btn.classList.add('listening');
       btn.textContent = '👂';
@@ -1357,31 +1362,32 @@
     });
   }
 
+  var NO_SR_MSG = 'Speech recognition is not available here. On iPhone open ' +
+    'the site directly in the Safari app (speaking does not work in the home-screen app) — ' +
+    'on desktop use Chrome or Safari.';
+
   // mic in the dictionary tab: speak a word instead of typing it
-  if (SR) {
-    $('micInput').hidden = false;
-    var micFb = document.createElement('div');
-    $('micInput').addEventListener('click', function () {
-      var btn = $('micInput');
-      if (btn.classList.contains('listening')) return;
-      btn.classList.add('listening');
-      btn.textContent = '👂';
-      var done = false;
-      listenZh(function (alts) {
-        done = true;
-        btn.classList.remove('listening');
-        btn.textContent = '🎤';
-        var zh = (alts[0] || '').replace(/[^㐀-鿿]/g, '');
-        if (zh) setWord(zh.slice(0, 8));
-      }, function (err) {
-        if (done || err === null) return;
-        btn.classList.remove('listening');
-        btn.textContent = '🎤';
-      });
+  $('micInput').hidden = false;
+  $('micInput').addEventListener('click', function () {
+    var btn = $('micInput');
+    if (!SR) { alert(NO_SR_MSG); return; }
+    if (btn.classList.contains('listening')) return;
+    btn.classList.add('listening');
+    btn.textContent = '👂';
+    var done = false;
+    listenZh(function (alts) {
+      done = true;
+      btn.classList.remove('listening');
+      btn.textContent = '🎤';
+      var zh = (alts[0] || '').replace(/[^㐀-鿿]/g, '');
+      if (zh) setWord(zh.slice(0, 8));
+    }, function (err) {
+      if (done || err === null) return;
+      btn.classList.remove('listening');
+      btn.textContent = '🎤';
     });
-  } else {
-    $('srNote').hidden = false;
-  }
+  });
+  if (!SR) $('srNote').hidden = false;
 
   // ---------------------------------------------------------------- talk: everyday dialogues
   function renderDlgList() {
@@ -1408,14 +1414,14 @@
       var div = document.createElement('div');
       div.className = 'bubble' + (who === 'B' ? ' b' : '');
       div.innerHTML = '<span class="who">' + (who === 'B' ? '乙 B' : '甲 A') + '</span>' +
-        (SR ? '<button class="speak mic">🎤</button>' : '') +
+        '<button class="speak mic">🎤</button>' +
         '<button class="speak" data-say="' + esc(zh) + '">🔊</button>' +
         '<div class="zh">' + rubyHtml(zh, null) + '</div>' +
         '<div class="dlg-split">' + hintChipsHtml(zh, true) + '</div>' +
         '<div class="dlg-en">' + esc(en) + '</div>' +
         '<div class="say-fb" hidden></div>';
       box.appendChild(div);
-      if (SR) attachMic(div.querySelector('.mic'), function () { return zh; }, div.querySelector('.say-fb'));
+      attachMic(div.querySelector('.mic'), function () { return zh; }, div.querySelector('.say-fb'));
     });
     bindSpeakButtons(box);
     applyDlgToggles();
