@@ -1259,20 +1259,62 @@
   // ---------------------------------------------------------------- speech recognition (say it like Duolingo)
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 
-  function listenZh(onResult, onError) {
+  // iOS Safari quirks: results often arrive only as interim, and recognition
+  // may never end on its own — so collect partials, stop on silence, and
+  // fall back to the last partial when no final result ever comes.
+  function listenZh(onResult, onError, onPartial) {
+    if (window.speechSynthesis) speechSynthesis.cancel(); // free the audio session
     var rec = new SR();
     rec.lang = 'zh-CN';
-    rec.interimResults = false;
+    rec.continuous = false;
+    rec.interimResults = true;
     rec.maxAlternatives = 5;
+    var finished = false;
+    var lastText = '';
+    var silenceTimer = null;
+    var hardTimer = setTimeout(function () { stopRec(); }, 8000);
+    function stopRec() { try { rec.stop(); } catch (e) {} }
+    function finish(alts) {
+      if (finished) return;
+      finished = true;
+      clearTimeout(silenceTimer);
+      clearTimeout(hardTimer);
+      stopRec();
+      if (alts && alts.length) onResult(alts);
+      else if (lastText) onResult([lastText]);
+      else onError('no-speech');
+    }
     rec.onresult = function (ev) {
-      var alts = [];
-      var res = ev.results[0];
-      for (var i = 0; i < res.length; i++) alts.push(res[i].transcript);
-      onResult(alts);
+      var interim = '';
+      var finals = [];
+      for (var i = 0; i < ev.results.length; i++) {
+        var res = ev.results[i];
+        if (res.isFinal) {
+          for (var j = 0; j < res.length; j++) {
+            if (res[j] && res[j].transcript) finals.push(res[j].transcript);
+          }
+        }
+        if (res[0] && res[0].transcript) interim += res[0].transcript;
+      }
+      if (interim) {
+        lastText = interim;
+        if (onPartial) onPartial(interim);
+      }
+      if (finals.length) { finish(finals); return; }
+      // stop ~1.6s after speech stops changing
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(stopRec, 1600);
     };
-    rec.onerror = function (ev) { onError(ev.error || 'error'); };
-    rec.onend = function () { onError && onError(null); }; // fires after result too; guarded by caller
-    try { rec.start(); } catch (e) { onError('busy'); }
+    rec.onerror = function (ev) {
+      if (finished) return;
+      if (lastText) { finish(null); return; }
+      finished = true;
+      clearTimeout(silenceTimer);
+      clearTimeout(hardTimer);
+      onError(ev.error || 'error');
+    };
+    rec.onend = function () { finish(null); };
+    try { rec.start(); } catch (e) { finished = true; onError('busy'); }
     return rec;
   }
 
@@ -1339,25 +1381,24 @@
       if (btn.classList.contains('listening')) return;
       btn.classList.add('listening');
       btn.textContent = '👂';
-      var done = false;
-      listenZh(function (alts) {
-        done = true;
+      fbBox.hidden = false;
+      fbBox.innerHTML = '<div class="say-heard">Listening… speak now 🎙️</div>';
+      function reset() {
         btn.classList.remove('listening');
         btn.textContent = '🎤';
-        fbBox.hidden = false;
+      }
+      listenZh(function (alts) {
+        reset();
         fbBox.innerHTML = speechFeedbackHtml(getTarget(), alts);
       }, function (err) {
-        if (done) return;
-        btn.classList.remove('listening');
-        btn.textContent = '🎤';
-        if (err === null) return; // plain end without result
-        done = true;
-        fbBox.hidden = false;
+        reset();
         fbBox.innerHTML = '<div class="say-heard">' +
           (err === 'not-allowed' || err === 'service-not-allowed'
             ? 'Microphone access was blocked — allow it in your browser settings.'
-            : err === 'no-speech' ? 'We didn’t hear anything — try again closer to the microphone.'
+            : err === 'no-speech' ? 'We didn’t hear anything — try again, a bit louder and closer to the phone.'
             : 'Speech recognition failed (' + esc(String(err)) + '). Try again.') + '</div>';
+      }, function (partial) {
+        fbBox.innerHTML = '<div class="say-heard">👂 ' + esc(partial) + '</div>';
       });
     });
   }
@@ -1374,17 +1415,17 @@
     if (btn.classList.contains('listening')) return;
     btn.classList.add('listening');
     btn.textContent = '👂';
-    var done = false;
-    listenZh(function (alts) {
-      done = true;
+    function reset() {
       btn.classList.remove('listening');
       btn.textContent = '🎤';
+    }
+    listenZh(function (alts) {
+      reset();
       var zh = (alts[0] || '').replace(/[^㐀-鿿]/g, '');
       if (zh) setWord(zh.slice(0, 8));
-    }, function (err) {
-      if (done || err === null) return;
-      btn.classList.remove('listening');
-      btn.textContent = '🎤';
+    }, function () { reset(); },
+    function (partial) {
+      $('typeInput').value = partial;
     });
   });
   if (!SR) $('srNote').hidden = false;
