@@ -1,5 +1,5 @@
 /* Cache-first service worker: app works fully offline after first load. */
-var VERSION = 'xiezi-v8';
+var VERSION = 'xiezi-v9';
 var ASSETS = [
   './',
   'index.html',
@@ -39,6 +39,23 @@ self.addEventListener('activate', function (e) {
 
 self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
+  // network-first for page loads so updates arrive immediately; cache fallback offline
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(function (res) {
+        if (res.ok) {
+          var copy = res.clone();
+          caches.open(VERSION).then(function (c) { c.put(e.request, copy); });
+        }
+        return res;
+      }).catch(function () {
+        return caches.match(e.request, { ignoreSearch: true }).then(function (hit) {
+          return hit || caches.match('index.html');
+        });
+      })
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(function (hit) {
       return hit || fetch(e.request).then(function (res) {
