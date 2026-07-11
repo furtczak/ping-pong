@@ -1609,13 +1609,39 @@
   ];
 
   var GENERIC_REACTIONS = ['好的，我明白了。', '真的吗？有意思！', '嗯嗯，我知道了。', '哈哈，不错！'];
-  var prax = { scen: null, step: 0, scores: [], answered: 0 };
+  var prax = { scen: null, step: 0, scores: [], answered: 0, busy: false };
+
+  // speak and call done when the utterance finishes (with a time fallback,
+  // since iOS sometimes never fires onend)
+  function speakThen(text, done) {
+    var called = false;
+    function fire() { if (!called) { called = true; done(); } }
+    var fallback = Math.min(6000, Math.max(1400, 320 * text.length));
+    setTimeout(fire, fallback);
+    if (!window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-CN';
+    u.rate = 0.85;
+    u.onend = fire;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+
+  function typingBubble() {
+    var div = document.createElement('div');
+    div.className = 'bubble typing';
+    div.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    $('praxLines').appendChild(div);
+    div.scrollIntoView({ block: 'nearest' });
+    return div;
+  }
 
   function startPractice(scenIdx) {
     prax.scen = PRACTICE[scenIdx === undefined ? Math.floor(Math.random() * PRACTICE.length) : scenIdx];
     prax.step = 0;
     prax.scores = [];
     prax.answered = 0;
+    prax.busy = false;
     $('dlgList').hidden = true;
     $('dlgView').hidden = true;
     $('praxView').hidden = false;
@@ -1644,6 +1670,7 @@
     var step = prax.scen.steps[prax.step];
     praxBubble(step.q[0], step.q[1], 'bot');
     speak(step.q[0]);
+    prax.busy = false;
     $('praxSuggBox').hidden = true;
     $('praxSuggBox').innerHTML = '';
     if (step.end) {
@@ -1674,9 +1701,10 @@
 
   function praxAnswer(zhRaw) {
     var step = prax.scen.steps[prax.step];
-    if (!step || step.end) return;
+    if (!step || step.end || prax.busy) return;
     var zh = zhRaw.trim();
     if (!zh) return;
+    prax.busy = true;
     var bubble = praxBubble(zh, null, 'me');
     prax.answered++;
     // compare with the suggested answers: best pinyin-syllable match
@@ -1697,11 +1725,19 @@
       reaction = pick(GENERIC_REACTIONS);
     }
     prax.step++;
+    // conversational pacing: think → react (spoken) → pause → next question
+    var t1 = typingBubble();
     setTimeout(function () {
+      t1.remove();
       praxBubble(reaction, null, 'bot');
-      speak(reaction);
-      setTimeout(botAsk, 600);
-    }, 500);
+      speakThen(reaction, function () {
+        var t2 = typingBubble();
+        setTimeout(function () {
+          t2.remove();
+          botAsk();
+        }, 1100);
+      });
+    }, 1000);
   }
 
   function renderPraxSuggestions() {
@@ -1730,7 +1766,7 @@
   $('praxSugg').addEventListener('click', renderPraxSuggestions);
   $('praxSkip').addEventListener('click', function () {
     var step = prax.scen.steps[prax.step];
-    if (!step || step.end) return;
+    if (!step || step.end || prax.busy) return;
     prax.step++;
     botAsk();
   });

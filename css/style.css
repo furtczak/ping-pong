@@ -330,6 +330,16 @@ button.mic.listening { animation: micpulse 1s infinite; }
 .sug-row { display: flex; gap: 10px; align-items: flex-start; }
 .sug-row .zh { font-size: 19px; line-height: 1.9; }
 .sug-row .speak { flex: none; margin-top: 4px; }
+.bubble.typing { display: flex; gap: 5px; align-items: center; min-height: 0; padding: 14px 16px; }
+.bubble.typing .dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--muted);
+  animation: typebounce 1.2s infinite;
+}
+.bubble.typing .dot:nth-child(2) { animation-delay: .2s; }
+.bubble.typing .dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typebounce { 30% { transform: translateY(-4px); opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .bubble.typing .dot { animation: none; } }
+
 .prax-input { display: flex; gap: 8px; margin-top: 12px; }
 .prax-input input {
   flex: 1; font: inherit; color: inherit; min-width: 0;
