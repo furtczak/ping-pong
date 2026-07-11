@@ -1443,6 +1443,14 @@
   function renderDlgList() {
     var box = $('dlgList');
     box.innerHTML = '';
+    var pb = document.createElement('button');
+    pb.className = 'dlg-item prax-item';
+    pb.innerHTML = '<span class="em">🤖</span><span><b>Free conversation</b><small>Talk with the assistant — answer yourself, suggestions on tap</small></span>';
+    pb.addEventListener('click', function () {
+      if (!dict) return;
+      startPractice();
+    });
+    box.appendChild(pb);
     dialogs.forEach(function (dlg, i) {
       var b = document.createElement('button');
       b.className = 'dlg-item';
@@ -1455,6 +1463,7 @@
   function openDlg(i) {
     var dlg = dialogs[i];
     $('dlgList').hidden = true;
+    $('praxView').hidden = true;
     $('dlgView').hidden = false;
     $('dlgTitle').textContent = dlg.e + ' ' + dlg.t;
     var box = $('dlgLines');
@@ -1483,10 +1492,12 @@
   });
 
   function applyDlgToggles() {
-    var lines = $('dlgLines');
-    lines.classList.toggle('nopy', !$('dlgPinyin').checked);
-    lines.classList.toggle('split', $('dlgSplit').checked);
-    lines.classList.toggle('noen', !$('dlgEn').checked);
+    ['dlgLines', 'praxLines'].forEach(function (id) {
+      var lines = $(id);
+      lines.classList.toggle('nopy', !$('dlgPinyin').checked);
+      lines.classList.toggle('split', $('dlgSplit').checked);
+      lines.classList.toggle('noen', !$('dlgEn').checked);
+    });
   }
   ['dlgPinyin', 'dlgSplit', 'dlgEn'].forEach(function (id) {
     $(id).addEventListener('change', applyDlgToggles);
@@ -1500,6 +1511,254 @@
     if (!hz || !/[㐀-鿿]/.test(hz.textContent)) return;
     setWord(hz.textContent);
     showTab('dict');
+  });
+
+  // ---------------------------------------------------------------- free conversation practice
+  // steps: q = assistant's question [zh, en]; s = suggested answers [zh, en, assistant reaction]
+  var PRACTICE = [
+    { e: '☀️', t: 'Weather & plans', steps: [
+      { q: ['你好！今天天气怎么样？', 'Hi! How is the weather today?'], s: [
+        ['今天天气很好，很暖和。', 'The weather is great today, nice and warm.', '太好了！我们出去走走吧。'],
+        ['今天很冷，还刮风。', 'It is cold today, and windy too.', '那多穿一点儿衣服吧。'],
+        ['今天下雨了。', 'It is raining today.', '别忘了带伞！']] },
+      { q: ['你喜欢什么样的天气？', 'What kind of weather do you like?'], s: [
+        ['我喜欢晴天。', 'I like sunny days.', '我也是！晴天心情好。'],
+        ['我喜欢下雪的天气。', 'I like snowy weather.', '下雪的时候真漂亮。'],
+        ['我喜欢凉快的秋天。', 'I like the cool autumn.', '秋天不冷也不热，很舒服。']] },
+      { q: ['周末你想做什么？', 'What do you want to do this weekend?'], s: [
+        ['我想去公园。', 'I want to go to the park.', '好主意！公园里人很多。'],
+        ['我想在家休息。', 'I want to rest at home.', '休息也很重要。'],
+        ['我想和朋友见面。', 'I want to meet my friends.', '和朋友在一起最开心了。']] },
+      { q: ['你常常运动吗？', 'Do you exercise often?'], s: [
+        ['我每天都跑步。', 'I run every day.', '哇，你真棒！'],
+        ['我有时候游泳。', 'I sometimes swim.', '游泳对身体很好。'],
+        ['我不太喜欢运动。', 'I do not really like sports.', '哈哈，没关系，散散步也好。']] },
+      { q: ['今天聊得很开心！再见！', 'It was fun talking today! Goodbye!'], end: true }] },
+    { e: '🍜', t: 'Food', steps: [
+      { q: ['你好！你吃饭了吗？', 'Hi! Have you eaten?'], s: [
+        ['吃了，我吃了米饭。', 'Yes, I had rice.', '吃饱了就好。'],
+        ['还没吃，我有点儿饿。', 'Not yet, I am a bit hungry.', '那快去吃点儿东西吧！'],
+        ['我刚喝了咖啡。', 'I just had a coffee.', '我也爱喝咖啡。']] },
+      { q: ['你最喜欢吃什么菜？', 'What is your favourite dish?'], s: [
+        ['我最喜欢吃饺子。', 'I like dumplings the most.', '饺子太好吃了！'],
+        ['我喜欢吃面条。', 'I like noodles.', '面条又快又好吃。'],
+        ['我爱吃中国菜。', 'I love Chinese food.', '中国菜的种类特别多。']] },
+      { q: ['你会做饭吗？', 'Can you cook?'], s: [
+        ['会，我常常做饭。', 'Yes, I cook often.', '真厉害！下次做给我吃吧。'],
+        ['不会，我不会做饭。', 'No, I cannot cook.', '没关系，可以慢慢学。'],
+        ['会一点儿。', 'A little bit.', '一点儿也很好！']] },
+      { q: ['你想不想去饭馆吃饭？', 'Do you want to go eat at a restaurant?'], s: [
+        ['好啊，我们走吧！', 'Sure, let us go!', '太好了，我知道一家很好吃的店。'],
+        ['今天不行，明天怎么样？', 'Not today — how about tomorrow?', '好，那明天见！'],
+        ['我想在家吃。', 'I would rather eat at home.', '在家吃也很舒服。']] },
+      { q: ['好，下次一起吃饭！再见！', 'OK, let us eat together next time! Bye!'], end: true }] },
+    { e: '🙋', t: 'About you', steps: [
+      { q: ['你好！你叫什么名字？', 'Hello! What is your name?'], s: [
+        ['我叫安娜。', 'My name is Anna.', '安娜，很高兴认识你！'],
+        ['我叫马克。', 'My name is Marek.', '马克，很高兴认识你！'],
+        ['我的名字是李明。', 'My name is Li Ming.', '李明，名字真好听！']] },
+      { q: ['你是哪国人？', 'Which country are you from?'], s: [
+        ['我是波兰人。', 'I am Polish.', '波兰很漂亮！'],
+        ['我是德国人。', 'I am German.', '我有朋友也住在德国。'],
+        ['我是美国人。', 'I am American.', '美国很大！']] },
+      { q: ['你做什么工作？', 'What do you do for work?'], s: [
+        ['我是学生。', 'I am a student.', '学习加油！'],
+        ['我是老师。', 'I am a teacher.', '老师的工作很有意义。'],
+        ['我在公司工作。', 'I work at a company.', '工作忙不忙？']] },
+      { q: ['你为什么学中文？', 'Why are you learning Chinese?'], s: [
+        ['因为我喜欢中国文化。', 'Because I like Chinese culture.', '中国文化很有意思！'],
+        ['因为工作需要。', 'Because I need it for work.', '会中文对工作很有帮助。'],
+        ['因为我想去中国旅游。', 'Because I want to travel to China.', '欢迎你来中国玩！']] },
+      { q: ['你的中文很好！加油！再见！', 'Your Chinese is great! Keep it up! Bye!'], end: true }] },
+    { e: '🎬', t: 'Hobbies', steps: [
+      { q: ['你好！你有什么爱好？', 'Hi! What are your hobbies?'], s: [
+        ['我喜欢看电影。', 'I like watching movies.', '我也喜欢！你常去电影院吗？'],
+        ['我喜欢听音乐。', 'I like listening to music.', '音乐能让人放松。'],
+        ['我喜欢打篮球。', 'I like playing basketball.', '打篮球对身体好！']] },
+      { q: ['你周末常常做什么？', 'What do you usually do on weekends?'], s: [
+        ['我常常看书。', 'I often read books.', '你最近在看什么书？有意思吗？'],
+        ['我跟朋友一起玩。', 'I hang out with friends.', '和朋友一起总是很开心。'],
+        ['我在家睡觉。', 'I sleep at home.', '哈哈，好好休息也不错！']] },
+      { q: ['你喜欢什么样的电影？', 'What kind of movies do you like?'], s: [
+        ['我喜欢有意思的电影。', 'I like interesting movies.', '那我们爱好一样！'],
+        ['我爱看中国电影。', 'I love Chinese movies.', '看电影学中文，真聪明！'],
+        ['我不常看电影。', 'I do not watch movies often.', '没关系，每个人爱好不一样。']] },
+      { q: ['我们下个周末一起去看电影，好吗？', 'Shall we go see a movie next weekend?'], s: [
+        ['好啊，几点见？', 'Sure, what time shall we meet?', '晚上七点，怎么样？'],
+        ['不好意思，我没有时间。', 'Sorry, I do not have time.', '没关系，下次吧！'],
+        ['好主意！', 'Good idea!', '太好了，到时候见！']] },
+      { q: ['今天聊得真开心！再见！', 'That was a nice chat! Bye!'], end: true }] },
+    { e: '✈️', t: 'Travel', steps: [
+      { q: ['你好！你去过中国吗？', 'Hi! Have you been to China?'], s: [
+        ['去过，我去过北京。', 'Yes, I have been to Beijing.', '北京怎么样？好玩吗？'],
+        ['没去过，但是我很想去。', 'No, but I really want to go.', '有机会一定要去看看！'],
+        ['我明年想去。', 'I want to go next year.', '太好了！要好好准备哦。']] },
+      { q: ['你想去哪个城市？', 'Which city do you want to visit?'], s: [
+        ['我想去上海。', 'I want to go to Shanghai.', '上海很现代，晚上特别漂亮。'],
+        ['我想去北京。', 'I want to go to Beijing.', '北京有长城和故宫。'],
+        ['我想去很多地方。', 'I want to go to many places.', '中国很大，值得慢慢玩。']] },
+      { q: ['你喜欢坐飞机还是坐火车？', 'Do you prefer flying or taking the train?'], s: [
+        ['我喜欢坐火车。', 'I prefer the train.', '坐火车可以看风景。'],
+        ['我喜欢坐飞机。', 'I prefer flying.', '坐飞机又快又方便。'],
+        ['都可以。', 'Either is fine.', '你真随和！']] },
+      { q: ['旅行的时候你喜欢做什么？', 'What do you like doing when you travel?'], s: [
+        ['我喜欢吃当地的菜。', 'I like eating the local food.', '我也是！吃是旅行最重要的事，哈哈。'],
+        ['我喜欢照相。', 'I like taking photos.', '照片能留下美好的回忆。'],
+        ['我喜欢认识新朋友。', 'I like meeting new people.', '旅行认识的朋友很特别。']] },
+      { q: ['祝你旅行愉快！再见！', 'Have a great trip! Bye!'], end: true }] }
+  ];
+
+  var GENERIC_REACTIONS = ['好的，我明白了。', '真的吗？有意思！', '嗯嗯，我知道了。', '哈哈，不错！'];
+  var prax = { scen: null, step: 0, scores: [], answered: 0 };
+
+  function startPractice(scenIdx) {
+    prax.scen = PRACTICE[scenIdx === undefined ? Math.floor(Math.random() * PRACTICE.length) : scenIdx];
+    prax.step = 0;
+    prax.scores = [];
+    prax.answered = 0;
+    $('dlgList').hidden = true;
+    $('dlgView').hidden = true;
+    $('praxView').hidden = false;
+    $('praxTitle').textContent = '🤖 ' + prax.scen.e + ' ' + prax.scen.t;
+    $('praxLines').innerHTML = '';
+    $('praxText').value = '';
+    applyDlgToggles();
+    botAsk();
+  }
+
+  function praxBubble(zh, en, who) {
+    var div = document.createElement('div');
+    div.className = 'bubble' + (who === 'me' ? ' b' : '');
+    div.innerHTML = '<span class="who">' + (who === 'me' ? '你 you' : '🤖 assistant') + '</span>' +
+      '<button class="speak" data-say="' + esc(zh) + '">🔊</button>' +
+      '<div class="zh">' + rubyHtml(zh, null) + '</div>' +
+      '<div class="dlg-split">' + hintChipsHtml(zh, true) + '</div>' +
+      (en ? '<div class="dlg-en">' + esc(en) + '</div>' : '');
+    $('praxLines').appendChild(div);
+    bindSpeakButtons(div);
+    div.scrollIntoView({ block: 'nearest' });
+    return div;
+  }
+
+  function botAsk() {
+    var step = prax.scen.steps[prax.step];
+    praxBubble(step.q[0], step.q[1], 'bot');
+    speak(step.q[0]);
+    $('praxSuggBox').hidden = true;
+    $('praxSuggBox').innerHTML = '';
+    if (step.end) {
+      finishPractice();
+      return;
+    }
+    $('praxInput').hidden = false;
+    $('praxSugg').parentElement.hidden = false;
+  }
+
+  function finishPractice() {
+    $('praxInput').hidden = true;
+    $('praxSugg').parentElement.hidden = true;
+    var msg;
+    if (prax.answered) {
+      var avg = Math.round(prax.scores.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, prax.scores.length));
+      msg = 'You answered ' + prax.answered + ' question' + (prax.answered > 1 ? 's' : '') +
+        (prax.scores.length ? ' — average match ' + avg + '%.' : '.') + ' 加油！ Tap “New topic” to keep practicing.';
+    } else {
+      msg = 'Conversation finished. Tap “New topic” to try another one!';
+    }
+    var div = document.createElement('div');
+    div.className = 'muted';
+    div.style.padding = '10px 2px';
+    div.textContent = msg;
+    $('praxLines').appendChild(div);
+  }
+
+  function praxAnswer(zhRaw) {
+    var step = prax.scen.steps[prax.step];
+    if (!step || step.end) return;
+    var zh = zhRaw.trim();
+    if (!zh) return;
+    var bubble = praxBubble(zh, null, 'me');
+    prax.answered++;
+    // compare with the suggested answers: best pinyin-syllable match
+    var best = null;
+    step.s.forEach(function (sug) {
+      var r = matchSpeech(sug[0], zh);
+      if (!best || r.score > best.score) best = { sug: sug, score: r.score };
+    });
+    var reaction;
+    if (best && best.score >= 45) {
+      prax.scores.push(best.score);
+      var fb = document.createElement('div');
+      fb.className = 'dlg-en';
+      fb.innerHTML = '≈ „' + esc(best.sug[0]) + '” · match ' + best.score + '%';
+      bubble.appendChild(fb);
+      reaction = best.score >= 60 ? best.sug[2] : pick(GENERIC_REACTIONS);
+    } else {
+      reaction = pick(GENERIC_REACTIONS);
+    }
+    prax.step++;
+    setTimeout(function () {
+      praxBubble(reaction, null, 'bot');
+      speak(reaction);
+      setTimeout(botAsk, 600);
+    }, 500);
+  }
+
+  function renderPraxSuggestions() {
+    var step = prax.scen.steps[prax.step];
+    if (!step || step.end) return;
+    var box = $('praxSuggBox');
+    box.hidden = !box.hidden;
+    if (box.hidden) return;
+    box.innerHTML = '<p class="muted" style="margin:0 0 6px">You could answer for example… (tap 🔊, then say it yourself)</p>';
+    step.s.forEach(function (sug) {
+      var row = document.createElement('div');
+      row.className = 'sug-row';
+      row.innerHTML = '<button class="speak" data-say="' + esc(sug[0]) + '">🔊</button>' +
+        '<div><div class="zh">' + rubyHtml(sug[0], null) + '</div>' +
+        '<div class="dlg-en">' + esc(sug[1]) + '</div></div>';
+      box.appendChild(row);
+    });
+    bindSpeakButtons(box);
+  }
+
+  $('praxBack').addEventListener('click', function () {
+    $('praxView').hidden = true;
+    $('dlgList').hidden = false;
+  });
+  $('praxNew').addEventListener('click', function () { startPractice(); });
+  $('praxSugg').addEventListener('click', renderPraxSuggestions);
+  $('praxSkip').addEventListener('click', function () {
+    var step = prax.scen.steps[prax.step];
+    if (!step || step.end) return;
+    prax.step++;
+    botAsk();
+  });
+  $('praxSend').addEventListener('click', function () {
+    var v = $('praxText').value;
+    $('praxText').value = '';
+    praxAnswer(v);
+  });
+  $('praxText').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') { ev.preventDefault(); $('praxSend').click(); }
+  });
+  $('praxMic').addEventListener('click', function () {
+    var btn = $('praxMic');
+    if (!SR) { alert(NO_SR_MSG); return; }
+    if (prax.rec) { try { prax.rec.stop(); } catch (e) {} return; }
+    btn.classList.add('listening');
+    btn.textContent = '⏹';
+    function reset() {
+      prax.rec = null;
+      btn.classList.remove('listening');
+      btn.textContent = '🎤';
+    }
+    prax.rec = listenZh(function (alts) {
+      reset();
+      $('praxText').value = '';
+      praxAnswer((alts[0] || '').replace(/[^㐀-鿿。！？，]/g, ''));
+    }, function () { reset(); },
+    function (partial) { $('praxText').value = partial; });
   });
 
   // ---------------------------------------------------------------- words list
