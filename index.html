@@ -175,6 +175,24 @@
       <h3 id="dlgTitle"></h3>
       <div id="dlgLines" class="dlg-lines"></div>
     </div>
+    <div id="praxView" hidden>
+      <div class="learn-top">
+        <button id="praxBack" class="ghost small">← All dialogues</button>
+        <button id="praxNew" class="ghost small">🔄 New topic</button>
+      </div>
+      <h3 id="praxTitle"></h3>
+      <div id="praxLines" class="dlg-lines"></div>
+      <div class="prax-help">
+        <button id="praxSugg" class="ghost small">💡 Suggestions</button>
+        <button id="praxSkip" class="ghost small">⏭ Skip question</button>
+      </div>
+      <div id="praxSuggBox" class="prax-sugg" hidden></div>
+      <div class="prax-input" id="praxInput">
+        <button id="praxMic" class="mic" title="Answer by voice">🎤</button>
+        <input id="praxText" type="text" placeholder="…or type your answer" autocomplete="off">
+        <button id="praxSend">Send</button>
+      </div>
+    </div>
     <p class="muted" id="dlgNote" hidden>Loading dialogues…</p>
   </section>
 </div>
@@ -198,7 +216,7 @@
     <p>Runs entirely in your browser — free &amp; offline after first load.</p>
     <p>Dictionary: <a href="https://cc-cedict.org/">CC-CEDICT</a> (CC BY-SA 4.0) · Sentences: <a href="https://tatoeba.org/">Tatoeba</a> (CC BY 2.0 FR) · Recognition: <a href="https://github.com/gugray/HanziLookupJS">HanziLookupJS</a> (LGPL)</p>
     <p>Tip: in Safari tap <strong>Share → Add to Home Screen</strong> to install as an app.</p>
-    <p id="appVersion">version 11</p>
+    <p id="appVersion">version 12</p>
   </footer>
 </main>
 
