@@ -29,6 +29,7 @@
   <button data-tab="quiz">🎯<span>Quiz</span></button>
   <button data-tab="talk">💬<span>Talk</span></button>
   <button data-tab="words">📚<span>Words</span></button>
+  <button data-tab="rules">🧱<span>Rules</span></button>
 </nav>
 
 <div id="tab-dict">
@@ -213,11 +214,19 @@
   </section>
 </div>
 
+<div id="tab-rules" hidden>
+  <section class="card">
+    <h2>How Chinese words are built</h2>
+    <p class="muted">Most Chinese words are made of two characters that snap together like LEGO bricks. There are five classic ways they combine — once you see the patterns, thousands of words suddenly make sense. Tap 🎲 for fresh examples, tap a word to open it in the dictionary.</p>
+  </section>
+  <div id="rulesList"></div>
+</div>
+
   <footer>
     <p>Runs entirely in your browser — free &amp; offline after first load.</p>
     <p>Dictionary: <a href="https://cc-cedict.org/">CC-CEDICT</a> (CC BY-SA 4.0) · Sentences: <a href="https://tatoeba.org/">Tatoeba</a> (CC BY 2.0 FR) · Recognition: <a href="https://github.com/gugray/HanziLookupJS">HanziLookupJS</a> (LGPL)</p>
     <p>Tip: in Safari tap <strong>Share → Add to Home Screen</strong> to install as an app.</p>
-    <p id="appVersion">version 14</p>
+    <p id="appVersion">version 15</p>
   </footer>
 </main>
 
