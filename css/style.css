@@ -354,6 +354,20 @@ button.mic.listening { animation: micpulse 1s infinite; }
 .word-row .opt-main { flex: 1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; background: var(--bg); border-radius: 12px; padding: 10px 12px; }
 .word-row .speak { align-self: center; }
 
+/* Word-building rules */
+.rule-py { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.rule-formula {
+  display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .05em;
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 8px; padding: 3px 10px; margin: 0 0 10px;
+}
+.rule-ex { display: grid; gap: 12px; }
+.rule-row { border-top: 1px solid var(--line); padding-top: 10px; }
+.rule-literal { font-size: 14px; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.rule-chunk { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; }
+.rule-chunk b { font-size: 17px; font-weight: 600; margin-right: 4px; }
+.rule-plus, .rule-arrow { color: var(--muted); font-weight: 700; }
+
 footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--muted); }
 footer a { color: inherit; }
 

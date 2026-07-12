@@ -79,6 +79,7 @@
     .then(function (rows) {
       dict = rows;
       buildIndexes();
+      renderRules();
       step();
       refresh();
       return fetch('data/medians.json');
@@ -827,6 +828,7 @@
     });
     TABS.forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
     if (tab === 'words') renderWords(false);
+    if (tab === 'rules' && dict) renderRules();
   }
 
   // ---------------------------------------------------------------- learn: shared helpers
@@ -2022,6 +2024,167 @@
   function setAllGlosses(hide) {
     $('wordsList').querySelectorAll('.opt-gloss').forEach(function (g) { g.hidden = hide; });
     $('wordsList').querySelectorAll('.opt-info').forEach(function (b) { b.textContent = hide ? 'show' : 'hide'; });
+  }
+
+  // ---------------------------------------------------------------- rules: how words are built (构词法)
+  // examples: [word, per-character glosses joined with |, meaning]
+  var RULES = [
+    { hz: '动宾式', py: 'dòngbīnshì', name: 'Verb–Object', formula: 'ACTION + THING',
+      how: 'The first character is an action, the second is what the action is done to — exactly like “eat dinner” or “sing a song”. Many everyday “verbs” in Chinese are secretly a verb plus its little built-in object.',
+      ex: [
+        ['吃饭', 'eat|meal', 'to eat, have a meal'],
+        ['睡觉', 'sleep|a sleep', 'to sleep'],
+        ['唱歌', 'sing|song', 'to sing'],
+        ['说话', 'speak|words', 'to talk'],
+        ['看书', 'read|book', 'to read'],
+        ['开车', 'drive|car', 'to drive'],
+        ['跳舞', 'jump|dance', 'to dance'],
+        ['见面', 'meet|face', 'to meet up'],
+        ['上班', 'go to|work shift', 'to go to work'],
+        ['下课', 'finish|class', 'class is over'],
+        ['结婚', 'tie|marriage', 'to get married'],
+        ['帮忙', 'help|a task', 'to help out'],
+        ['照相', 'shoot|image', 'to take a photo'],
+        ['洗澡', 'wash|bath', 'to take a shower'],
+        ['散步', 'scatter|steps', 'to take a walk'],
+        ['游泳', 'swim|swimming', 'to swim']] },
+    { hz: '偏正式', py: 'piānzhèngshì', name: 'Modifier–Head', formula: 'DESCRIPTION + THING',
+      how: 'The first character describes the second one — like “fire-cart” for train or “electric-brain” for computer. The last character tells you WHAT it is, the first tells you WHAT KIND.',
+      ex: [
+        ['火车', 'fire|vehicle', 'train'],
+        ['飞机', 'flying|machine', 'airplane'],
+        ['电脑', 'electric|brain', 'computer'],
+        ['手机', 'hand|machine', 'mobile phone'],
+        ['黑板', 'black|board', 'blackboard'],
+        ['冰箱', 'ice|box', 'fridge'],
+        ['眼镜', 'eye|lens', 'glasses'],
+        ['牛奶', 'cow|milk', 'milk'],
+        ['中文', 'China|writing', 'Chinese language'],
+        ['大人', 'big|person', 'adult'],
+        ['小说', 'small|talk', 'novel'],
+        ['白菜', 'white|vegetable', 'Chinese cabbage'],
+        ['课本', 'lesson|book', 'textbook'],
+        ['雨衣', 'rain|clothes', 'raincoat'],
+        ['夜市', 'night|market', 'night market'],
+        ['热水', 'hot|water', 'hot water']] },
+    { hz: '并列式', py: 'bìnglièshì', name: 'Parallel', formula: 'TWIN + TWIN',
+      how: 'Two characters with similar (or exactly opposite) meanings stand side by side as equals. Two synonyms reinforce one idea — and two opposites melt into a new one: “east-west” becomes “thing”, “buy-sell” becomes “trade”.',
+      ex: [
+        ['朋友', 'friend|companion', 'friend'],
+        ['学习', 'study|practise', 'to learn'],
+        ['快乐', 'glad|joyful', 'happy'],
+        ['身体', 'body|body', 'body, health'],
+        ['声音', 'sound|tone', 'sound, voice'],
+        ['语言', 'speech|words', 'language'],
+        ['道路', 'road|path', 'road'],
+        ['东西', 'east|west', 'thing'],
+        ['买卖', 'buy|sell', 'trade, business'],
+        ['大小', 'big|small', 'size'],
+        ['多少', 'many|few', 'how many?'],
+        ['左右', 'left|right', 'approximately'],
+        ['开关', 'open|close', 'switch'],
+        ['呼吸', 'breathe out|breathe in', 'to breathe'],
+        ['父母', 'father|mother', 'parents'],
+        ['早晚', 'morning|evening', 'sooner or later']] },
+    { hz: '补充式', py: 'bǔchōngshì', name: 'Complementary', formula: 'ACTION + RESULT',
+      how: 'The first character is the action, the second tells you how it ends — the result. “Look + perceive” = to see, “study + able” = to master. The second brick answers: and did it work?',
+      ex: [
+        ['看见', 'look|perceive', 'to see'],
+        ['听懂', 'listen|understand', 'to understand (by ear)'],
+        ['学会', 'study|be able', 'to master'],
+        ['找到', 'search|arrive', 'to find'],
+        ['打开', 'strike|open', 'to open'],
+        ['提高', 'lift|high', 'to improve, raise'],
+        ['说明', 'speak|clear', 'to explain'],
+        ['完成', 'finish|become', 'to complete'],
+        ['记住', 'note|stay', 'to remember firmly'],
+        ['写完', 'write|finish', 'to finish writing'],
+        ['吃饱', 'eat|full', 'to eat one’s fill'],
+        ['改进', 'change|forward', 'to improve'],
+        ['站住', 'stand|halt', 'to stop, halt'],
+        ['推翻', 'push|overturn', 'to overthrow'],
+        ['看清', 'look|clear', 'to see clearly'],
+        ['长大', 'grow|big', 'to grow up']] },
+    { hz: '主谓式', py: 'zhǔwèishì', name: 'Subject–Predicate', formula: 'THING + WHAT IT DOES',
+      how: 'A tiny sentence frozen into a word: the first character is the subject, the second says what it does or how it is. “Earth shakes” = earthquake, “head aches” = headache. A whole sentence in two bricks!',
+      ex: [
+        ['地震', 'earth|shakes', 'earthquake'],
+        ['头疼', 'head|aches', 'headache'],
+        ['心疼', 'heart|aches', 'to feel sorry for, dote on'],
+        ['年轻', 'years|light', 'young'],
+        ['眼红', 'eyes|red', 'jealous'],
+        ['胆小', 'gallbladder|small', 'timid, cowardly'],
+        ['嘴硬', 'mouth|hard', 'stubborn (never admits fault)'],
+        ['性急', 'temper|quick', 'impatient'],
+        ['面熟', 'face|familiar', 'looks familiar'],
+        ['手软', 'hand|soft', 'lenient, soft-handed'],
+        ['耳鸣', 'ear|rings', 'ringing in the ears'],
+        ['眼花', 'eyes|blurred', 'dazzled, seeing stars'],
+        ['心细', 'heart|fine', 'careful, attentive'],
+        ['嘴甜', 'mouth|sweet', 'sweet-talking'],
+        ['命苦', 'fate|bitter', 'ill-fated'],
+        ['气短', 'breath|short', 'short of breath, disheartened']] }
+  ];
+
+  var rulesBuilt = false;
+  function renderRules() {
+    if (rulesBuilt) return;
+    rulesBuilt = true;
+    var wrap = $('rulesList');
+    RULES.forEach(function (rule, ri) {
+      var card = document.createElement('section');
+      card.className = 'card';
+      card.innerHTML = '<div class="pad-head"><h2>' + esc(rule.name) + ' — ' + esc(rule.hz) +
+        ' <span class="rule-py">' + esc(rule.py) + '</span></h2>' +
+        '<button class="ghost small rule-more">🎲 New examples</button></div>' +
+        '<p class="def">' + esc(rule.how) + '</p>' +
+        '<p class="rule-formula">' + esc(rule.formula) + '</p>' +
+        '<div class="rule-ex"></div>';
+      wrap.appendChild(card);
+      var exBox = card.querySelector('.rule-ex');
+      function refill() {
+        exBox.innerHTML = '';
+        shuffle(rule.ex.slice()).slice(0, 4).forEach(function (ex) {
+          exBox.appendChild(ruleExampleEl(ex));
+        });
+      }
+      card.querySelector('.rule-more').addEventListener('click', refill);
+      refill();
+    });
+  }
+
+  function ruleExampleEl(ex) {
+    var word = ex[0], glosses = ex[1].split('|'), meaning = ex[2];
+    var row = document.createElement('div');
+    row.className = 'rule-row';
+    var chars = word.split('');
+    var literal = chars.map(function (ch, i) {
+      return '<span class="rule-chunk"><b>' + esc(ch) + '</b> ' + esc(glosses[i] || '') + '</span>';
+    }).join('<span class="rule-plus">+</span>');
+    var r = bestRow(word);
+    var main = document.createElement('button');
+    main.className = 'opt-main';
+    main.title = 'Open in dictionary';
+    main.innerHTML = '<span class="opt-hz">' + esc(word) + '</span>' +
+      (r ? '<span class="opt-py">' + pinyinHtml(r[2]) + '</span>' : '');
+    main.addEventListener('click', function () {
+      setWord(word);
+      showTab('dict');
+    });
+    var sp = document.createElement('button');
+    sp.className = 'speak';
+    sp.textContent = '🔊';
+    sp.addEventListener('click', function () { speak(word); });
+    var top = document.createElement('div');
+    top.className = 'word-row';
+    top.appendChild(main);
+    top.appendChild(sp);
+    row.appendChild(top);
+    var lit = document.createElement('div');
+    lit.className = 'rule-literal';
+    lit.innerHTML = literal + '<span class="rule-arrow">→</span>' + esc(meaning);
+    row.appendChild(lit);
+    return row;
   }
 
   // ---------------------------------------------------------------- PWA
