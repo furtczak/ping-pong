@@ -1835,6 +1835,55 @@
     $('praxLines').appendChild(div);
   }
 
+  // "understanding" layer: build a reaction from what the user actually said.
+  // Ordered patterns — first match wins; captured fragment is echoed back.
+  var SMART_RULES = [
+    [/我叫(.{1,7}?)[。！？，]?$/, function (x) { return x + '，这个名字真好听！'; }],
+    [/我(?:的名字)?是(.{1,6})人/, function (x) { return x + '！我听说' + x + '很漂亮。'; }],
+    [/不喜欢(.{1,8}?)[。！？，]?$/, function (x) { return '哦，原来你不喜欢' + x + '。每个人口味不一样嘛。'; }],
+    [/喜欢(.{1,8}?)[。！？，]?$/, function (x) { return '你喜欢' + x + '！我也觉得' + x + '很不错。'; }],
+    [/不想(.{1,8}?)[。！？，]?$/, function (x) { return '不想' + x + '也没关系。'; }],
+    [/想(.{1,8}?)[。！？，]?$/, function (x) { return '希望你能' + x + '！'; }],
+    [/不会(.{1,6}?)[。！？，]?$/, function (x) { return '不会' + x + '没关系，可以慢慢学！'; }],
+    [/会(.{1,6}?)[。！？，]?$/, function (x) { return '你会' + x + '，真厉害！'; }],
+    [/去过(.{1,6}?)[。！？，]?$/, function (x) { return x + '？听起来很好玩！'; }],
+    [/我是(.{1,6}?)[。！？，]?$/, function (x) { return '原来你是' + x + '！'; }],
+    [/我有(.{1,7}?)[。！？，]?$/, function (x) { return '你有' + x + '，真好！'; }],
+    [/没有|没去过|还没/, function () { return '没关系，以后有机会的！'; }],
+    [/下雨|下雪/, function () { return '这样的天气记得多穿点儿，出门带伞哦。'; }],
+    [/很冷|太冷/, function () { return '冷的话要注意保暖啊！'; }],
+    [/很热|太热/, function () { return '热的话要多喝水哦！'; }],
+    [/很忙|太忙|很累|太累/, function () { return '辛苦了，要好好休息。'; }],
+    [/谢谢/, function () { return '不客气！'; }]
+  ];
+  var ECHO_TEMPLATES = [
+    function (w) { return '你说到“' + w + '”，很有意思！'; },
+    function (w) { return '“' + w + '”，嗯，我记住了！'; },
+    function (w) { return '原来是“' + w + '”啊，明白了！'; }
+  ];
+
+  function cleanFrag(x) {
+    return (x || '').replace(/^[的了吧呢啊哦]+|[。！？，、的了吧呢啊哦]+$/g, '');
+  }
+
+  function smartReaction(zh) {
+    for (var i = 0; i < SMART_RULES.length; i++) {
+      var m = zh.match(SMART_RULES[i][0]);
+      if (m) {
+        var frag = cleanFrag(m[1]);
+        if (m.length > 1 && !frag) continue; // capture required but empty
+        return SMART_RULES[i][1](frag);
+      }
+    }
+    // echo the longest dictionary word from the answer
+    var words = segmentZh(zh).filter(function (w) { return /[㐀-鿿]/.test(w) && w.length >= 2; });
+    if (words.length) {
+      words.sort(function (a, b) { return b.length - a.length; });
+      return pick(ECHO_TEMPLATES)(words[0]);
+    }
+    return null;
+  }
+
   function praxAnswer(zhRaw) {
     var step = prax.scen.steps[prax.step];
     if (!step || step.end || prax.busy) return;
@@ -1856,9 +1905,9 @@
       fb.className = 'dlg-en';
       fb.innerHTML = '≈ „' + esc(best.sug[0]) + '” · match ' + best.score + '%';
       bubble.appendChild(fb);
-      reaction = best.score >= 60 ? best.sug[2] : pick(GENERIC_REACTIONS);
+      reaction = best.score >= 60 ? best.sug[2] : (smartReaction(zh) || pick(GENERIC_REACTIONS));
     } else {
-      reaction = pick(GENERIC_REACTIONS);
+      reaction = smartReaction(zh) || pick(GENERIC_REACTIONS);
     }
     prax.step++;
     // conversational pacing: think → react (spoken) → pause → next question
