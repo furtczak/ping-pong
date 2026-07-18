@@ -1901,9 +1901,19 @@
     var reaction;
     if (best && best.score >= 45) {
       prax.scores.push(best.score);
+      // per-character feedback against the closest suggestion: green = said
+      // right, red = pronunciation to fix — not just an overall percentage
+      var m = matchSpeech(best.sug[0], zh);
+      var colored = m.syls.map(function (s, i) {
+        return '<span class="' + (m.ok[i] ? 'say-ok' : 'say-bad') + '">' + esc(s.ch) + '</span>';
+      }).join('');
       var fb = document.createElement('div');
-      fb.className = 'dlg-en';
-      fb.innerHTML = '≈ „' + esc(best.sug[0]) + '” · match ' + best.score + '%';
+      fb.className = 'say-fb';
+      fb.innerHTML = '<div class="say-target">' + colored + '</div>' +
+        '<div class="say-heard">' + best.score + '% — ' +
+        (best.score >= 90 ? 'excellent pronunciation! 🎉'
+          : best.score >= 70 ? 'good — the red characters need work'
+          : 'practice the red characters and try again') + '</div>';
       bubble.appendChild(fb);
       reaction = best.score >= 60 ? best.sug[2] : (smartReaction(zh) || pick(GENERIC_REACTIONS));
     } else {
