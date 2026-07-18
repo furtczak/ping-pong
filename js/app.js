@@ -1627,6 +1627,96 @@
         ['是运动和吃得好。', 'Exercise and eating well.', '说得对，两个都重要。'],
         ['心情好最重要。', 'A good mood matters most.', '同意！开心最重要。']] },
       { q: ['说得对！祝你身体健康！再见！', 'Right you are! Stay healthy! Bye!'], end: true }] },
+    { e: '🎨', t: 'Colours & favourites', lvl: 1, steps: [
+      { q: ['你好！你喜欢什么颜色？', 'Hi! What colour do you like?'], s: [
+        ['我喜欢红色。', 'I like red.', '红色很漂亮！'],
+        ['我喜欢蓝色。', 'I like blue.', '蓝色像天空！'],
+        ['我喜欢黑色和白色。', 'I like black and white.', '黑白很酷！']] },
+      { q: ['你的衣服是什么颜色的？', 'What colour are your clothes?'], s: [
+        ['我的衣服是白色的。', 'My clothes are white.', '白色很好看！'],
+        ['是黑色的。', 'They are black.', '黑色很酷！'],
+        ['是蓝色的。', 'They are blue.', '蓝色很好看！']] },
+      { q: ['你喜欢猫还是狗？', 'Do you like cats or dogs?'], s: [
+        ['我喜欢猫。', 'I like cats.', '小猫很可爱！'],
+        ['我喜欢狗。', 'I like dogs.', '小狗是好朋友！'],
+        ['都喜欢。', 'I like both.', '哈哈，我也是！']] },
+      { q: ['你今天高兴吗？', 'Are you happy today?'], s: [
+        ['我很高兴。', 'I am very happy.', '太好了！'],
+        ['我有点儿累。', 'I am a bit tired.', '那要好好休息！'],
+        ['我不太高兴。', 'Not really.', '别难过，明天会更好！']] },
+      { q: ['谢谢你和我聊天！再见！', 'Thanks for chatting with me! Bye!'], end: true }] },
+    { e: '🏫', t: 'Learning Chinese', lvl: 2, steps: [
+      { q: ['你学中文多长时间了？', 'How long have you been learning Chinese?'], s: [
+        ['我学了一年了。', 'I have been learning for a year.', '一年就说得这么好！'],
+        ['我学了三个月。', 'Three months.', '三个月？很不错了！'],
+        ['我刚开始学。', 'I have just started.', '万事开头难，加油！']] },
+      { q: ['你觉得中文难吗？', 'Do you find Chinese hard?'], s: [
+        ['有点儿难，但是很有意思。', 'A bit hard, but very interesting.', '有兴趣就不怕难！'],
+        ['汉字很难，说话不难。', 'Characters are hard, speaking is not.', '很多人都这么说，哈哈。'],
+        ['不太难。', 'Not too hard.', '哇，你很有语言天赋！']] },
+      { q: ['你每天学习多长时间？', 'How long do you study every day?'], s: [
+        ['我每天学习一个小时。', 'One hour every day.', '每天一小时，很棒的习惯！'],
+        ['我每天学三十分钟。', 'Thirty minutes a day.', '坚持最重要！'],
+        ['我周末学习。', 'I study on weekends.', '周末学习也很好！']] },
+      { q: ['你会写汉字吗？', 'Can you write characters?'], s: [
+        ['会写一点儿。', 'A little bit.', '一点儿一点儿来！'],
+        ['我觉得写汉字很难。', 'I find writing characters hard.', '多练习就不难了。'],
+        ['我每天练习写字。', 'I practise writing every day.', '太用功了，佩服！']] },
+      { q: ['你一定会学得很好！加油！再见！', 'You will learn it well for sure! Keep going! Bye!'], end: true }] },
+    { e: '⚽', t: 'Sports', lvl: 2, steps: [
+      { q: ['你好！你喜欢运动吗？', 'Hi! Do you like sports?'], s: [
+        ['喜欢，我常常跑步。', 'Yes, I often run.', '跑步对身体最好了！'],
+        ['我喜欢打篮球。', 'I like playing basketball.', '打篮球很帅！'],
+        ['不太喜欢，哈哈。', 'Not really, haha.', '哈哈，散步也是运动！']] },
+      { q: ['你会游泳吗？', 'Can you swim?'], s: [
+        ['会，我游得很好。', 'Yes, I swim well.', '真厉害！'],
+        ['会一点儿。', 'A little.', '会一点儿就很好了！'],
+        ['不会，我想学。', 'No, but I want to learn.', '学游泳很有意思！']] },
+      { q: ['你常常看足球比赛吗？', 'Do you often watch football matches?'], s: [
+        ['常常看，我很喜欢足球。', 'Often — I love football.', '你最喜欢哪个队？下次告诉我！'],
+        ['有时候看。', 'Sometimes.', '大比赛的时候看最有意思！'],
+        ['不看，我觉得没意思。', 'No, I find it boring.', '哈哈，每个人爱好不同。']] },
+      { q: ['周末我们一起去打球，怎么样？', 'Shall we go play ball this weekend?'], s: [
+        ['好啊，去哪儿打？', 'Sure — where shall we play?', '学校旁边有个球场！'],
+        ['好主意！', 'Good idea!', '太好了，周末见！'],
+        ['这个周末我没有时间。', 'I have no time this weekend.', '没关系，下次吧！']] },
+      { q: ['运动让人健康！再见！', 'Sport keeps you healthy! Bye!'], end: true }] },
+    { e: '🎊', t: 'Festivals', lvl: 3, steps: [
+      { q: ['你好！你知道中国的春节吗？', 'Hi! Do you know about Chinese New Year?'], s: [
+        ['知道，就是中国新年。', 'Yes — it is the Chinese New Year.', '对！春节是最重要的节日。'],
+        ['听说过，但是不太了解。', 'I have heard of it but do not know much.', '那我以后慢慢给你介绍！'],
+        ['我很想体验一次春节。', 'I would love to experience it once.', '春节的时候到处都很热闹！']] },
+      { q: ['你们国家最重要的节日是什么？', 'What is the most important holiday in your country?'], s: [
+        ['是圣诞节。', 'It is Christmas.', '圣诞节的气氛一定很温暖。'],
+        ['是新年。', 'It is New Year.', '新年新希望！'],
+        ['我们有很多传统节日。', 'We have many traditional holidays.', '真想都了解一下！']] },
+      { q: ['过节的时候你们一般做什么？', 'What do you usually do during holidays?'], s: [
+        ['我们全家人一起吃饭。', 'The whole family eats together.', '和中国的春节一样！'],
+        ['我们互相送礼物。', 'We give each other presents.', '收礼物最开心了！'],
+        ['我们放假休息，看电视。', 'We take time off and watch TV.', '哈哈，放松也很重要。']] },
+      { q: ['如果你来中国过春节，你想做什么？', 'If you spent Chinese New Year in China, what would you do?'], s: [
+        ['我想吃饺子，看烟花。', 'I would eat dumplings and watch fireworks.', '春节的饺子特别好吃！'],
+        ['我想去看舞龙舞狮。', 'I would watch the dragon and lion dances.', '舞狮特别精彩！'],
+        ['我想体验放鞭炮。', 'I would try setting off firecrackers.', '噼里啪啦，特别热闹！']] },
+      { q: ['欢迎你来中国过春节！再见！', 'Come spend Chinese New Year in China! Bye!'], end: true }] },
+    { e: '🌆', t: 'City or countryside', lvl: 3, steps: [
+      { q: ['你好！你住在大城市还是小城市？', 'Hi! Do you live in a big city or a small one?'], s: [
+        ['我住在大城市。', 'I live in a big city.', '大城市一定很热闹！'],
+        ['我住在一个小城市。', 'I live in a small city.', '小城市生活很舒服。'],
+        ['我住在农村，很安静。', 'I live in the countryside — very quiet.', '农村的空气一定很好！']] },
+      { q: ['你喜欢城市生活吗？', 'Do you like city life?'], s: [
+        ['喜欢，城市里什么都有。', 'Yes — the city has everything.', '确实，生活很方便。'],
+        ['不太喜欢，人太多了。', 'Not really — too many people.', '人多的时候确实很累。'],
+        ['还行，有好有坏。', 'It is OK — good and bad sides.', '说得很客观！']] },
+      { q: ['大城市最大的问题是什么？', 'What is the biggest problem of big cities?'], s: [
+        ['我觉得是堵车。', 'I think it is traffic jams.', '堵车真的让人头疼。'],
+        ['是房子太贵了。', 'Housing is too expensive.', '是啊，房价越来越高。'],
+        ['是空气不太好。', 'The air is not so good.', '所以周末要去公园呼吸新鲜空气！']] },
+      { q: ['以后你想住在哪儿？', 'Where would you like to live in the future?'], s: [
+        ['我想住在海边。', 'I want to live by the sea.', '每天看海，太浪漫了！'],
+        ['我想住在安静的小镇。', 'I want to live in a quiet town.', '安静的生活很幸福。'],
+        ['我想一直住在大城市。', 'I want to stay in a big city.', '城市的机会确实更多！']] },
+      { q: ['希望你住得开心！再见！', 'I hope you live happily! Bye!'], end: true }] },
     { e: '☀️', t: 'Weather & plans', lvl: 2, steps: [
       { q: ['你好！今天天气怎么样？', 'Hi! How is the weather today?'], s: [
         ['今天天气很好，很暖和。', 'The weather is great today, nice and warm.', '太好了！我们出去走走吧。'],
@@ -1720,7 +1810,106 @@
   ];
 
   var GENERIC_REACTIONS = ['好的，我明白了。', '真的吗？有意思！', '嗯嗯，我知道了。', '哈哈，不错！'];
-  var prax = { scen: null, step: 0, scores: [], answered: 0, busy: false, lvl: 1, last: null };
+  var prax = { scen: null, step: 0, scores: [], answered: 0, busy: false, lvl: 1, last: null, mode: 'guided', tries: 0 };
+
+  // the assistant can answer the user's own questions, like a real chat partner
+  var CN_NUM = ['日', '一', '二', '三', '四', '五', '六'];
+  var QA_RULES = [
+    [/(.{1,6})是什么意思/, function (x) {
+      var row = bestRow(cleanFrag(x));
+      if (row) {
+        return '「' + cleanFrag(x) + '」(' + pinyinMarked(row[2]) + ') 的意思是: ' + rowGloss(row) + '。';
+      }
+      return '这个词我也不认识，我们一起查词典吧！';
+    }],
+    [/你叫什么|你的名字|你是谁/, function () { return '我叫小智，是你的中文练习伙伴！'; }],
+    [/你(?:今年)?(?:多大|几岁)/, function () { return '哈哈，我是电脑程序，没有年龄！'; }],
+    [/你是哪国人|你(?:住|)在哪/, function () { return '我住在你的手机里，哈哈！'; }],
+    [/现在几点|几点了/, function () {
+      var d = new Date();
+      return '现在' + d.getHours() + '点' + (d.getMinutes() < 10 ? '零' : '') + d.getMinutes() + '分。';
+    }],
+    [/今天(?:是)?星期几/, function () { return '今天星期' + CN_NUM[new Date().getDay()] + '。'; }],
+    [/今天(?:是)?几号/, function () {
+      var d = new Date();
+      return '今天是' + (d.getMonth() + 1) + '月' + d.getDate() + '号。';
+    }],
+    [/天气怎么样/, function () { return '我看不到窗外，你告诉我吧！'; }],
+    [/你喜欢什么|你有什么爱好/, function () { return '我最喜欢跟你用中文聊天！'; }],
+    [/你会(.{1,6})吗/, function (x) { return '我会一点儿' + x + '，不过我们还是说中文吧！'; }],
+    [/你喜欢(.{1,8})吗/, function (x) { return '我很喜欢' + x + '！'; }],
+    [/(?:吗|呢)[？?]?$/, function () { return '好问题！不过我只是个小程序，说说你自己吧！'; }],
+    [/[？?]$|为什么|怎么|什么|谁|哪/, function () { return '这个问题很有意思！我还在学习，你觉得呢？'; }]
+  ];
+
+  function qaAnswer(zh) {
+    if (!/[？?吗呢]|什么|为什么|怎么|几点|几号|星期几|多大|几岁|谁|哪/.test(zh)) return null;
+    for (var i = 0; i < QA_RULES.length; i++) {
+      var m = zh.match(QA_RULES[i][0]);
+      if (m) {
+        var frag = m.length > 1 ? cleanFrag(m[1]) : '';
+        if (m.length > 1 && !frag) continue;
+        return QA_RULES[i][1](frag);
+      }
+    }
+    return null;
+  }
+
+  // did we "understand"? (real mode only) — needs a clean match, a known
+  // pattern, or at least one solid dictionary word in a long-enough answer
+  function understood(zh, sugScore) {
+    if (sugScore >= 45) return true;
+    for (var i = 0; i < SMART_RULES.length; i++) {
+      var m = zh.match(SMART_RULES[i][0]);
+      if (m && (m.length === 1 || cleanFrag(m[1]))) return true;
+    }
+    var han = zh.replace(/[^㐀-鿿]/g, '');
+    if (han.length < 3) return false;
+    return segmentZh(zh).some(function (w) { return w.length >= 2 && /[㐀-鿿]/.test(w) && charPinyin.has(w); });
+  }
+
+  var RETRY_PROMPTS = [
+    '不好意思，我没听懂。请再说一遍，好吗？',
+    '什么？你说得有点儿快，再说一次吧。',
+    '嗯……我没明白你的意思，可以再说一遍吗？'
+  ];
+
+  // bot replies without moving to the next question (questions, retries)
+  function botReply(text) {
+    prax.busy = true;
+    var t = typingBubble();
+    setTimeout(function () {
+      t.remove();
+      praxBubble(text, null, 'bot');
+      speakThen(text, function () { prax.busy = false; });
+    }, 800);
+  }
+
+  // conversation mode picker: guided (forgiving) vs real (must be understood)
+  (function () {
+    var box = $('praxMode');
+    [['guided', '🎓 Guided'], ['real', '💬 Real talk']].forEach(function (o, i) {
+      var b = document.createElement('button');
+      b.textContent = o[1];
+      b.setAttribute('data-v', o[0]);
+      if (i === 0) b.classList.add('sel');
+      box.appendChild(b);
+    });
+    selectable(box);
+    box.addEventListener('click', function (ev) {
+      var b = ev.target.closest('button');
+      if (!b) return;
+      prax.mode = b.getAttribute('data-v');
+      updateModeNote();
+    });
+    updateModeNote();
+  })();
+
+  function updateModeNote() {
+    $('praxModeNote').textContent = prax.mode === 'real'
+      ? 'Real talk: if you speak unclearly, Xiao Zhi won’t understand and will ask you to repeat — just like a real person. You can also ask questions!'
+      : 'Guided: every answer is accepted. You can also ask Xiao Zhi questions (现在几点？…是什么意思？).';
+  }
 
   // level picker: the conversation vocabulary range
   (function () {
@@ -1807,6 +1996,7 @@
     praxBubble(step.q[0], step.q[1], 'bot');
     speak(step.q[0]);
     prax.busy = false;
+    prax.tries = 0;
     $('praxSuggBox').hidden = true;
     $('praxSuggBox').innerHTML = '';
     if (step.end) {
@@ -1891,13 +2081,30 @@
     if (!zh) return;
     prax.busy = true;
     var bubble = praxBubble(zh, null, 'me');
-    prax.answered++;
     // compare with the suggested answers: best pinyin-syllable match
     var best = null;
     step.s.forEach(function (sug) {
       var r = matchSpeech(sug[0], zh);
       if (!best || r.score > best.score) best = { sug: sug, score: r.score };
     });
+    // not an answer but the user's own question? answer it and stay on this step
+    if (!(best && best.score >= 45)) {
+      var qa = qaAnswer(zh);
+      if (qa) { botReply(qa); return; }
+      // real talk: unclear speech is genuinely not understood
+      if (prax.mode === 'real' && !understood(zh, best ? best.score : 0)) {
+        prax.tries++;
+        if (prax.tries >= 2) {
+          if ($('praxSuggBox').hidden) renderPraxSuggestions();
+          botReply('没关系，慢慢来！你可以看看下面的建议，再试一次。');
+        } else {
+          botReply(pick(RETRY_PROMPTS));
+        }
+        return;
+      }
+    }
+    prax.answered++;
+    prax.tries = 0;
     var reaction;
     if (best && best.score >= 45) {
       prax.scores.push(best.score);
