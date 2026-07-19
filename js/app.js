@@ -1357,6 +1357,26 @@
     return { syls: a, ok: ok, score: n ? Math.round(100 * dp[n][m] / n) : 0 };
   }
 
+  // the characters marked red, each with pinyin and meaning — so even a
+  // failed attempt teaches you the characters you missed
+  function missedCharsHtml(syls, ok) {
+    var seen = {};
+    var chips = '';
+    for (var i = 0; i < syls.length; i++) {
+      var ch = syls[i].ch;
+      if (ok[i] || seen[ch]) continue;
+      seen[ch] = true;
+      var row = bestRow(ch);
+      var py = row ? pinyinHtml(row[2]) : (charPinyin.has(ch) ? pinyinHtml(charPinyin.get(ch)) : '');
+      var gl = row ? rowGloss(row) : (charInfo(ch) && charInfo(ch)[6] ? charInfo(ch)[6].split(';')[0] : '');
+      chips += '<span class="hint-chip"><span class="hz">' + esc(ch) + '</span>' +
+        (py ? '<span class="py">' + py + '</span>' : '') +
+        (gl ? '<span class="gl">' + esc(gl) + '</span>' : '') + '</span>';
+    }
+    if (!chips) return '';
+    return '<div class="say-missed"><span class="say-missed-label">The red characters mean:</span>' + chips + '</div>';
+  }
+
   function speechFeedbackHtml(target, alts) {
     var best = null;
     alts.forEach(function (t) {
@@ -1371,7 +1391,8 @@
     var verdict = r.score >= 90 ? 'Excellent! 🎉' : r.score >= 70 ? 'Good! 👍' : r.score >= 40 ? 'Keep practicing 💪' : 'Try again 🙂';
     return '<div class="say-score">' + r.score + '% — ' + verdict + '</div>' +
       '<div class="say-target">' + colored + '</div>' +
-      '<div class="say-heard">We heard: ' + esc(best.t || '…') + '</div>';
+      '<div class="say-heard">We heard: ' + esc(best.t || '…') + '</div>' +
+      missedCharsHtml(r.syls, r.ok);
   }
 
   var IOS_DICTATION_TIP = 'We didn’t hear anything. On iPhone, Chinese speech needs the Chinese ' +
@@ -2120,7 +2141,8 @@
         '<div class="say-heard">' + best.score + '% — ' +
         (best.score >= 90 ? 'excellent pronunciation! 🎉'
           : best.score >= 70 ? 'good — the red characters need work'
-          : 'practice the red characters and try again') + '</div>';
+          : 'practice the red characters and try again') + '</div>' +
+        missedCharsHtml(m.syls, m.ok);
       bubble.appendChild(fb);
       reaction = best.score >= 60 ? best.sug[2] : (smartReaction(zh) || pick(GENERIC_REACTIONS));
     } else {

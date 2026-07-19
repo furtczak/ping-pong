@@ -318,6 +318,8 @@ button.mic.listening { animation: micpulse 1s infinite; }
 .say-ok { color: var(--tone2); }
 .say-bad { color: var(--tone1); text-decoration: underline; }
 .say-heard { font-size: 12px; color: var(--muted); }
+.say-missed { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.say-missed-label { font-size: 11px; color: var(--muted); width: 100%; }
 
 /* Conversation practice */
 .prax-item { border: 1px dashed var(--muted); }
