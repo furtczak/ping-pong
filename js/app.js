@@ -1830,6 +1830,226 @@
       { q: ['祝你旅行愉快！再见！', 'Have a great trip! Bye!'], end: true }] }
   ];
 
+  // three extra, livelier questions per topic — merged before the end step
+  var PRACTICE_EXTRA = {
+    'First meeting': [
+      { q: ['你有中文名字吗？', 'Do you have a Chinese name?'], s: [
+        ['有，我的中文名字很好听。', 'Yes, and it sounds nice.', '下次告诉我你的中文名字！'],
+        ['还没有，你帮我起一个吧！', 'Not yet — pick one for me!', '好啊！我觉得「乐乐」很适合你！'],
+        ['我不需要中文名字。', 'I do not need one.', '哈哈，好吧！']] },
+      { q: ['你喜欢学中文吗？', 'Do you like learning Chinese?'], s: [
+        ['喜欢，很有意思。', 'Yes, it is interesting.', '太好了！'],
+        ['喜欢，但是有点儿难。', 'Yes, but it is a bit hard.', '难的东西才有意思！'],
+        ['我妈妈让我学的，哈哈。', 'My mum makes me learn it, haha.', '哈哈，妈妈说得对！']] },
+      { q: ['你今天做什么了？', 'What did you do today?'], s: [
+        ['我去上班了。', 'I went to work.', '辛苦了！'],
+        ['我在家学习了。', 'I studied at home.', '真用功！'],
+        ['我和朋友出去玩了。', 'I went out with friends.', '听起来很开心！']] }],
+    'Eating & drinking': [
+      { q: ['你早上喝咖啡还是喝茶？', 'Coffee or tea in the morning?'], s: [
+        ['我喝咖啡，不喝咖啡我睡不醒。', 'Coffee — without it I cannot wake up.', '哈哈，很多人都这样！'],
+        ['我喝茶。', 'I drink tea.', '喝茶很健康！'],
+        ['我只喝水。', 'I only drink water.', '水最健康了！']] },
+      { q: ['你吃过中国菜吗？', 'Have you tried Chinese food?'], s: [
+        ['吃过，很好吃！', 'Yes — delicious!', '中国菜有八大菜系呢！'],
+        ['没吃过，我很想试试。', 'Not yet, but I want to.', '一定要试试饺子！'],
+        ['我常常吃中国菜。', 'I eat it often.', '你真有口福！']] },
+      { q: ['甜的和辣的，你喜欢哪个？', 'Sweet or spicy — which do you like?'], s: [
+        ['我喜欢甜的。', 'I like sweet.', '甜的让人开心！'],
+        ['我喜欢辣的。', 'I like spicy.', '那你一定要去四川！'],
+        ['都喜欢，哈哈。', 'Both, haha.', '哈哈，什么都吃最幸福！']] }],
+    'Family & every day': [
+      { q: ['你有哥哥姐姐吗？', 'Do you have older brothers or sisters?'], s: [
+        ['有，我有一个哥哥。', 'Yes, one older brother.', '有哥哥真好！'],
+        ['有，我有一个姐姐。', 'Yes, one older sister.', '姐姐一定很照顾你！'],
+        ['没有，就我一个。', 'No, it is just me.', '一个人也很好！']] },
+      { q: ['你们家谁做饭？', 'Who cooks in your family?'], s: [
+        ['我妈妈做饭。', 'My mum cooks.', '妈妈做的饭最好吃！'],
+        ['我做饭。', 'I cook.', '你真能干！'],
+        ['我们一起做。', 'We cook together.', '一起做饭很开心！']] },
+      { q: ['周末你和家人做什么？', 'What do you do with your family on weekends?'], s: [
+        ['我们一起看电视。', 'We watch TV together.', '很温馨！'],
+        ['我们出去吃饭。', 'We eat out.', '吃什么好吃的？哈哈！'],
+        ['我们去公园。', 'We go to the park.', '散步聊天，真好！']] }],
+    'Colours & favourites': [
+      { q: ['你喜欢什么动物？', 'What animal do you like?'], s: [
+        ['我喜欢熊猫。', 'I like pandas.', '熊猫是中国的国宝！'],
+        ['我喜欢马。', 'I like horses.', '马很漂亮！'],
+        ['我喜欢鸟。', 'I like birds.', '小鸟会唱歌！']] },
+      { q: ['你喜欢什么水果？', 'What fruit do you like?'], s: [
+        ['我喜欢苹果。', 'I like apples.', '每天一个苹果，身体好！'],
+        ['我喜欢西瓜。', 'I like watermelon.', '夏天吃西瓜最舒服！'],
+        ['我什么水果都爱吃。', 'I love all fruit.', '水果都很健康！']] },
+      { q: ['你喜欢白天还是晚上？', 'Do you prefer day or night?'], s: [
+        ['我喜欢白天。', 'I prefer daytime.', '白天有太阳，心情好！'],
+        ['我喜欢晚上，很安静。', 'Night — it is quiet.', '晚上确实很安静。'],
+        ['都喜欢。', 'I like both.', '哈哈，你真随和！']] }],
+    'Weather & plans': [
+      { q: ['你喜欢下雪吗？', 'Do you like snow?'], s: [
+        ['喜欢，下雪很漂亮。', 'Yes, snow is beautiful.', '下雪的时候可以堆雪人！'],
+        ['不喜欢，太冷了。', 'No, it is too cold.', '那冬天要多穿衣服！'],
+        ['我没见过雪。', 'I have never seen snow.', '真的吗？希望你有一天能看到雪！']] },
+      { q: ['夏天和冬天，你喜欢哪个？', 'Summer or winter?'], s: [
+        ['我喜欢夏天。', 'I like summer.', '夏天可以游泳！'],
+        ['我喜欢冬天。', 'I like winter.', '冬天喝热茶最舒服！'],
+        ['我最喜欢春天和秋天。', 'I like spring and autumn most.', '不冷不热，聪明的选择！']] },
+      { q: ['明天你打算做什么？', 'What are your plans for tomorrow?'], s: [
+        ['我要上班。', 'I have to work.', '工作加油！'],
+        ['我想去买东西。', 'I want to go shopping.', '买点儿什么好东西？'],
+        ['还没想好呢。', 'I have not decided yet.', '随心情也很好！']] }],
+    'Food': [
+      { q: ['你吃过火锅吗？', 'Have you tried hot pot?'], s: [
+        ['吃过，太好吃了！', 'Yes — so good!', '冬天吃火锅最幸福了！'],
+        ['没吃过，火锅是什么？', 'No — what is hot pot?', '就是把菜放进热汤里煮，特别好吃！'],
+        ['我想和朋友一起去吃。', 'I want to try it with friends.', '火锅就要很多人一起吃才热闹！']] },
+      { q: ['你会用筷子吗？', 'Can you use chopsticks?'], s: [
+        ['会，我用得很好。', 'Yes, quite well.', '真厉害！'],
+        ['会一点儿，有时候用不好。', 'A little — not always well.', '多练习就好了！'],
+        ['不会，太难了！', 'No — too hard!', '哈哈，先从夹花生开始练！']] },
+      { q: ['如果只能吃一种菜，你选什么？', 'If you could eat only one dish forever, which one?'], s: [
+        ['我选饺子！', 'Dumplings!', '饺子什么馅儿都有，聪明！'],
+        ['我选面条。', 'Noodles.', '长长的面条，长长的人生！'],
+        ['太难选了，哈哈。', 'Too hard to choose, haha.', '哈哈，我也选不出来！']] }],
+    'About you': [
+      { q: ['你会说几种语言？', 'How many languages do you speak?'], s: [
+        ['我会说两种。', 'Two.', '两种已经很棒了！'],
+        ['我会说三种语言。', 'Three languages.', '哇，语言天才！'],
+        ['只会一种，现在学中文。', 'Just one — now learning Chinese.', '中文会是你的第二种！']] },
+      { q: ['你喜欢你的城市吗？', 'Do you like your city?'], s: [
+        ['喜欢，我的城市很漂亮。', 'Yes, it is beautiful.', '真想去看看！'],
+        ['还行吧。', 'It is OK.', '哈哈，平平淡淡也是生活。'],
+        ['不太喜欢，我想搬家。', 'Not really — I want to move.', '那要找一个喜欢的地方！']] },
+      { q: ['五年以后，你想做什么？', 'Where do you see yourself in five years?'], s: [
+        ['我想说一口流利的中文！', 'Speaking fluent Chinese!', '一定可以的，加油！'],
+        ['我想去很多国家旅游。', 'Travelling to many countries.', '世界那么大，都去看看！'],
+        ['我想有自己的房子。', 'Having my own home.', '梦想会实现的！']] }],
+    'Hobbies': [
+      { q: ['你喜欢听什么音乐？', 'What music do you listen to?'], s: [
+        ['我喜欢流行音乐。', 'Pop music.', '中文流行歌也很好听！'],
+        ['我喜欢安静的音乐。', 'Quiet music.', '安静的音乐让人放松。'],
+        ['什么都听。', 'A bit of everything.', '音乐不分种类，好听就行！']] },
+      { q: ['你玩游戏吗？', 'Do you play games?'], s: [
+        ['玩，我常常玩手机游戏。', 'Yes, mobile games a lot.', '别玩太久，眼睛要休息！'],
+        ['我喜欢下棋。', 'I like chess.', '下棋的人都很聪明！'],
+        ['我不玩游戏。', 'I do not play games.', '每个人放松的方式不同！']] },
+      { q: ['如果有一天假期，你做什么？', 'If you had a day off, what would you do?'], s: [
+        ['我想睡一整天！', 'Sleep the whole day!', '哈哈，睡觉也是爱好！'],
+        ['我去爬山。', 'Go hiking.', '山上的空气特别好！'],
+        ['我在家看电影。', 'Watch movies at home.', '记得准备好吃的！']] }],
+    'Travel': [
+      { q: ['你旅行的时候喜欢照相吗？', 'Do you like taking photos when travelling?'], s: [
+        ['喜欢，我照了很多照片。', 'Yes, I take lots of photos.', '照片是最好的纪念！'],
+        ['不太照，我喜欢用眼睛看。', 'Not much — I prefer to just look.', '用心记住也很美！'],
+        ['我喜欢给朋友照相。', 'I like taking photos of my friends.', '你真是好朋友！']] },
+      { q: ['坐飞机你害怕吗？', 'Are you afraid of flying?'], s: [
+        ['不怕，我喜欢坐飞机。', 'No, I like flying.', '从天上看云很美！'],
+        ['有一点儿怕。', 'A little.', '没关系，飞机很安全！'],
+        ['我没坐过飞机。', 'I have never flown.', '第一次坐要靠窗户坐！']] },
+      { q: ['长城和熊猫，你想先看哪个？', 'The Great Wall or pandas — which first?'], s: [
+        ['先看长城！', 'The Great Wall first!', '不到长城非好汉！'],
+        ['先看熊猫！', 'Pandas first!', '熊猫真的太可爱了！'],
+        ['都想看，哈哈。', 'Both, haha.', '那要多来中国几次！']] }],
+    'Learning Chinese': [
+      { q: ['你觉得声调难吗？', 'Do you find the tones hard?'], s: [
+        ['很难，我常常说错。', 'Very — I often get them wrong.', '声调要多听多说，慢慢就好了！'],
+        ['还好，我慢慢习惯了。', 'OK — I am getting used to them.', '习惯了就自然了！'],
+        ['第三声最难！', 'The third tone is the hardest!', '哈哈，第三声确实最难！']] },
+      { q: ['你用什么方法学中文？', 'How do you study Chinese?'], s: [
+        ['我用手机软件学习。', 'With a phone app.', '哈哈，就像现在这样！'],
+        ['我看中国电影。', 'I watch Chinese movies.', '看电影学得最自然！'],
+        ['我跟老师学。', 'With a teacher.', '有老师进步会很快！']] },
+      { q: ['你最喜欢哪个汉字？', 'What is your favourite character?'], s: [
+        ['我喜欢「爱」。', 'I like 爱 (love).', '爱是最美的字！'],
+        ['我喜欢「笑」。', 'I like 笑 (smile).', '常常笑的人运气不会差！'],
+        ['我喜欢「龙」。', 'I like 龙 (dragon).', '龙在中国文化里很重要！']] }],
+    'Sports': [
+      { q: ['你喜欢看奥运会吗？', 'Do you like watching the Olympics?'], s: [
+        ['喜欢，特别是游泳比赛。', 'Yes — especially the swimming.', '游泳比赛很精彩！'],
+        ['有时候看。', 'Sometimes.', '大决赛最好看！'],
+        ['不太看。', 'Not really.', '没关系，自己运动更重要！']] },
+      { q: ['你每天走路多吗？', 'Do you walk a lot every day?'], s: [
+        ['多，我每天走一万步。', 'Yes — ten thousand steps a day.', '一万步！太厉害了！'],
+        ['不多，我常常坐车。', 'Not much — I usually ride.', '有时间可以多走走！'],
+        ['还行。', 'It is OK.', '走路是最简单的运动！']] },
+      { q: ['你想学什么新运动？', 'What new sport would you like to learn?'], s: [
+        ['我想学太极拳。', 'Tai chi.', '太极拳又健康又放松！'],
+        ['我想学滑雪。', 'Skiing.', '滑雪特别爽！'],
+        ['我想学功夫！', 'Kung fu!', '哈哈，中国功夫，好样的！']] }],
+    'Festivals': [
+      { q: ['你喜欢收礼物还是送礼物？', 'Do you prefer getting or giving presents?'], s: [
+        ['我喜欢收礼物，哈哈。', 'Getting them, haha.', '哈哈，谁不喜欢呢！'],
+        ['我更喜欢送礼物。', 'I prefer giving.', '送礼物的快乐更长久！'],
+        ['都喜欢！', 'Both!', '诚实，哈哈！']] },
+      { q: ['新年的时候你有什么愿望？', 'What is your New Year wish?'], s: [
+        ['我希望家人身体健康。', 'Good health for my family.', '健康最重要！'],
+        ['我希望中文越说越好。', 'Better and better Chinese.', '这个愿望一定会实现！'],
+        ['我希望去中国旅游。', 'To travel to China.', '中国欢迎你！']] },
+      { q: ['你知道红包吗？', 'Do you know about red envelopes?'], s: [
+        ['知道，里面有钱！', 'Yes — there is money inside!', '对！过年的时候长辈给孩子红包。'],
+        ['听说过，但不太清楚。', 'I have heard of them, but not sure.', '红包是装着钱的红色小信封，代表祝福！'],
+        ['我也想收红包，哈哈。', 'I want one too, haha.', '哈哈，那先说「新年快乐」！']] }],
+    'Travel stories': [
+      { q: ['旅行的时候你丢过东西吗？', 'Have you ever lost something while travelling?'], s: [
+        ['丢过手机，太伤心了。', 'My phone — so sad.', '天啊，那真的很难受！'],
+        ['丢过雨伞，不过没关系。', 'An umbrella, but no big deal.', '雨伞是最容易丢的东西，哈哈。'],
+        ['没有，我很小心。', 'No, I am careful.', '你真细心！']] },
+      { q: ['你更喜欢计划好还是随便走走？', 'Do you plan everything or just wander?'], s: [
+        ['我喜欢把一切都计划好。', 'I plan everything.', '有计划就不会慌！'],
+        ['我喜欢随便走走，更自由。', 'I like to wander — more freedom.', '意外的风景往往最美！'],
+        ['一半一半吧。', 'Half and half.', '灵活又安心，聪明！']] },
+      { q: ['说说你最难忘的一次旅行吧！', 'Tell me about your most memorable trip!'], s: [
+        ['我在海边看了日出，美极了。', 'I watched a sunrise by the sea — stunning.', '海边的日出真的难忘！'],
+        ['我在山上迷路了，现在想想很好笑。', 'I got lost in the mountains — funny now.', '哈哈，迷路也是故事！'],
+        ['我认识了很好的朋友。', 'I met wonderful friends.', '旅行中的朋友最珍贵！']] }],
+    'Work & plans': [
+      { q: ['你工作的时候喝咖啡吗？', 'Do you drink coffee while working?'], s: [
+        ['喝，不喝咖啡没法工作。', 'Yes — I cannot work without it.', '咖啡就是打工人的朋友！'],
+        ['偶尔喝。', 'Occasionally.', '偶尔喝提神刚刚好。'],
+        ['不喝，我喝茶。', 'No — I drink tea.', '喝茶更健康！']] },
+      { q: ['你喜欢在家工作还是去办公室？', 'Do you prefer working from home or at the office?'], s: [
+        ['在家，很自由。', 'From home — freedom.', '在家穿睡衣工作，哈哈！'],
+        ['办公室，效率高。', 'The office — more focus.', '办公室还有同事可以聊天！'],
+        ['都可以。', 'Either.', '灵活最好！']] },
+      { q: ['如果不用工作，你想做什么？', 'If you never had to work, what would you do?'], s: [
+        ['我想环游世界。', 'Travel around the world.', '这是很多人的梦想！'],
+        ['我想天天睡觉，哈哈。', 'Sleep every day, haha.', '哈哈，一个星期就无聊了！'],
+        ['我想开一家小咖啡馆。', 'Open a little café.', '到时候我去你的咖啡馆坐坐！']] }],
+    'Health & habits': [
+      { q: ['你喝水喝得多吗？', 'Do you drink enough water?'], s: [
+        ['多，我每天喝八杯水。', 'Yes — eight glasses a day.', '好习惯！'],
+        ['不多，我总是忘。', 'Not much — I keep forgetting.', '设个提醒吧！多喝热水！'],
+        ['还行。', 'It is OK.', '记得多喝一点儿！']] },
+      { q: ['你睡觉前看手机吗？', 'Do you look at your phone before sleeping?'], s: [
+        ['看，我知道不好，哈哈。', 'Yes — I know it is bad, haha.', '哈哈，我们都一样！'],
+        ['不看，我早早睡觉。', 'No — I go to sleep early.', '太自律了，佩服！'],
+        ['有时候看。', 'Sometimes.', '睡前看书更好哦！']] },
+      { q: ['压力大的时候你做什么？', 'What do you do when you are stressed?'], s: [
+        ['我去跑步。', 'I go running.', '跑完一身汗，烦恼都没了！'],
+        ['我听音乐。', 'I listen to music.', '音乐最治愈了。'],
+        ['我吃好吃的，哈哈。', 'I eat something tasty, haha.', '哈哈，美食解千愁！']] }],
+    'City or countryside': [
+      { q: ['你的城市有什么好玩的地方？', 'What is fun to see in your city?'], s: [
+        ['有一个很漂亮的老城区。', 'A beautiful old town.', '老城区最有味道了！'],
+        ['有很多好吃的饭馆。', 'Lots of good restaurants.', '那我一定要去尝尝！'],
+        ['有一个大公园。', 'A big park.', '公园散步最舒服！']] },
+      { q: ['你喜欢晚上的城市吗？', 'Do you like the city at night?'], s: [
+        ['喜欢，灯光很漂亮。', 'Yes — the lights are beautiful.', '夜景确实很美！'],
+        ['不喜欢，太吵了。', 'No — too noisy.', '安静的晚上更舒服。'],
+        ['喜欢安静的晚上。', 'I like quiet evenings.', '安静的夜晚适合想事情。']] },
+      { q: ['如果朋友来你的城市，你带他去哪儿？', 'If a friend visited, where would you take them?'], s: [
+        ['我带他去吃最好吃的东西。', 'To eat the best food.', '好朋友就要一起吃好吃的！'],
+        ['我带他看老城。', 'To see the old town.', '边走边讲故事，真好！'],
+        ['我带他去我最喜欢的咖啡馆。', 'To my favourite café.', '一定是个特别的地方！']] }]
+  };
+
+  PRACTICE.forEach(function (scen) {
+    var extra = PRACTICE_EXTRA[scen.t];
+    if (extra) {
+      var args = [scen.steps.length - 1, 0].concat(extra);
+      Array.prototype.splice.apply(scen.steps, args);
+    }
+  });
+
   var GENERIC_REACTIONS = ['好的，我明白了。', '真的吗？有意思！', '嗯嗯，我知道了。', '哈哈，不错！'];
   var prax = { scen: null, step: 0, scores: [], answered: 0, busy: false, lvl: 1, last: null, mode: 'guided', tries: 0 };
 
@@ -1976,7 +2196,7 @@
     return div;
   }
 
-  function startPractice() {
+  function startPractice(keepChat) {
     var pool = PRACTICE.filter(function (s) { return s.lvl === prax.lvl; });
     if (pool.length > 1 && prax.last) {
       var narrowed = pool.filter(function (s) { return s !== prax.last; });
@@ -1985,17 +2205,30 @@
     prax.scen = pick(pool);
     prax.last = prax.scen;
     prax.step = 0;
-    prax.scores = [];
-    prax.answered = 0;
     prax.busy = false;
+    if (!keepChat) {
+      prax.scores = [];
+      prax.answered = 0;
+      $('praxLines').innerHTML = '';
+    }
     $('dlgList').hidden = true;
     $('dlgView').hidden = true;
     $('praxView').hidden = false;
     $('praxTitle').textContent = '🤖 ' + prax.scen.e + ' ' + prax.scen.t + ' · HSK ' + (prax.scen.lvl === 3 ? '3+' : prax.scen.lvl);
-    $('praxLines').innerHTML = '';
     $('praxText').value = '';
     applyDlgToggles();
-    botAsk();
+    if (keepChat) {
+      // seamless topic change inside the same chat
+      var t = typingBubble();
+      setTimeout(function () {
+        t.remove();
+        var opener = pick(['我们换个话题吧！', '再聊点儿别的！', '好，下一个话题！']);
+        praxBubble(opener, 'Let’s switch topics!', 'bot');
+        setTimeout(botAsk, 900);
+      }, 900);
+    } else {
+      botAsk();
+    }
   }
 
   function praxBubble(zh, en, who) {
@@ -2035,15 +2268,24 @@
     if (prax.answered) {
       var avg = Math.round(prax.scores.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, prax.scores.length));
       msg = 'You answered ' + prax.answered + ' question' + (prax.answered > 1 ? 's' : '') +
-        (prax.scores.length ? ' — average match ' + avg + '%.' : '.') + ' 加油！ Tap “New topic” to keep practicing.';
+        (prax.scores.length ? ' — average match ' + avg + '%.' : '.') + ' 加油！';
     } else {
-      msg = 'Conversation finished. Tap “New topic” to try another one!';
+      msg = 'Topic finished!';
     }
     var div = document.createElement('div');
     div.className = 'muted';
     div.style.padding = '10px 2px';
     div.textContent = msg;
     $('praxLines').appendChild(div);
+    var cont = document.createElement('button');
+    cont.className = 'primary wide';
+    cont.textContent = '💬 Keep chatting — next topic';
+    cont.addEventListener('click', function () {
+      cont.remove();
+      startPractice(true);
+    });
+    $('praxLines').appendChild(cont);
+    cont.scrollIntoView({ block: 'nearest' });
   }
 
   // "understanding" layer: build a reaction from what the user actually said.
