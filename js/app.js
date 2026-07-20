@@ -1526,15 +1526,40 @@
     $(id).addEventListener('change', applyDlgToggles);
   });
 
-  // tap a word chip in a dialogue -> look it up in the dictionary tab
-  $('dlgLines').addEventListener('click', function (ev) {
-    var chip = ev.target.closest('.hint-chip');
-    if (!chip) return;
-    var hz = chip.querySelector('.hz');
-    if (!hz || !/[㐀-鿿]/.test(hz.textContent)) return;
-    setWord(hz.textContent);
-    showTab('dict');
-  });
+  // tap any word chip (dialogues, quiz hints, practice splits, missed chars)
+  // to hear how that word is pronounced; long-press opens it in the dictionary
+  (function () {
+    var main = document.querySelector('main');
+    var pressTimer = null, longPressed = false;
+    function chipOf(ev) { return ev.target.closest('.hint-chip'); }
+    function wordOf(chip) {
+      var hz = chip.querySelector('.hz');
+      return hz && /[㐀-鿿]/.test(hz.textContent) ? hz.textContent : null;
+    }
+    main.addEventListener('pointerdown', function (ev) {
+      var chip = chipOf(ev);
+      if (!chip) return;
+      longPressed = false;
+      pressTimer = setTimeout(function () {
+        var w = wordOf(chip);
+        if (w) { longPressed = true; setWord(w); showTab('dict'); }
+      }, 550);
+    });
+    function cancelPress() { clearTimeout(pressTimer); }
+    main.addEventListener('pointerup', cancelPress);
+    main.addEventListener('pointercancel', cancelPress);
+    main.addEventListener('pointermove', cancelPress);
+    main.addEventListener('click', function (ev) {
+      var chip = chipOf(ev);
+      if (!chip) return;
+      if (longPressed) { longPressed = false; return; }
+      var w = wordOf(chip);
+      if (!w) return;
+      speak(w);
+      chip.classList.add('chip-tapped');
+      setTimeout(function () { chip.classList.remove('chip-tapped'); }, 320);
+    });
+  })();
 
   // ---------------------------------------------------------------- free conversation practice
   // steps: q = assistant's question [zh, en]; s = suggested answers [zh, en, assistant reaction]

@@ -252,7 +252,9 @@ button.primary { background: var(--ink); color: var(--card); border-color: var(-
   display: flex; flex-wrap: wrap; gap: 8px; padding: 10px;
   background: var(--bg); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px;
 }
-.hint-chip { text-align: center; padding: 4px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.hint-chip { text-align: center; padding: 4px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; transition: background .15s, border-color .15s; }
+.hint-chip:active { transform: scale(.96); }
+.hint-chip.chip-tapped { background: var(--accent-soft); border-color: var(--accent); }
 .hint-chip .hz { font-size: 20px; display: block; }
 .hint-chip .py { font-size: 12px; font-weight: 600; display: block; }
 .hint-chip .gl { font-size: 11px; color: var(--muted); display: block; max-width: 110px; }
