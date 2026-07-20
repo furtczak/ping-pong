@@ -2121,7 +2121,7 @@
     var t = typingBubble();
     setTimeout(function () {
       t.remove();
-      praxBubble(text, null, 'bot');
+      praxBubble(text, reactionGloss(text), 'bot');
       speakThen(text, function () { prax.busy = false; });
     }, 800);
   }
@@ -2229,6 +2229,26 @@
     } else {
       botAsk();
     }
+  }
+
+  // rough English gloss for generated assistant reactions (which have no
+  // pre-written translation) — word by word from the dictionary, so every
+  // assistant bubble shows what it means, like the questions do
+  function reactionGloss(zh) {
+    var parts = segmentZh(zh).map(function (w) {
+      if (!/[㐀-鿿]/.test(w)) return '';
+      var row = bestRow(w);
+      if (!row) return '';
+      // prefer a plain word over bracketed grammar notes like "(adverb of degree)"
+      var defs = row[3].split(';');
+      for (var i = 0; i < defs.length; i++) {
+        var d = defs[i].trim();
+        if (!d || d.charAt(0) === '(' || /^(surname |CL:|old variant|variant of|abbr)/i.test(d)) continue;
+        return d.split(/[,、]/)[0].trim();
+      }
+      return rowGloss(row).replace(/^\([^)]*\)\s*/, '');
+    }).filter(Boolean);
+    return parts.join(' · ');
   }
 
   function praxBubble(zh, en, who) {
@@ -2395,7 +2415,7 @@
     var t1 = typingBubble();
     setTimeout(function () {
       t1.remove();
-      praxBubble(reaction, null, 'bot');
+      praxBubble(reaction, reactionGloss(reaction), 'bot');
       speakThen(reaction, function () {
         var t2 = typingBubble();
         setTimeout(function () {
