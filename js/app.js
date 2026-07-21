@@ -111,6 +111,7 @@
       sentences = rows;
       step();
       refresh();
+      buildDataReady();
     })
     .catch(function (e) {
       $('sentStatus').textContent = 'Failed to load data: ' + e;
@@ -2841,10 +2842,28 @@
   }
 
   $('buildStart').addEventListener('click', function () {
-    if (!buildPools()) { $('buildSetupNote').hidden = false; return; }
     build.lvl = selectedVal('buildLevel');
+    if (!buildPools()) {
+      build.pendingStart = true;
+      var note = $('buildSetupNote');
+      note.hidden = false;
+      note.textContent = 'Loading the sentence library… it will start automatically in a moment (first time only).';
+      return;
+    }
+    build.pendingStart = false;
+    $('buildSetupNote').hidden = true;
     nextSentence();
   });
+
+  // called when the sentence data finishes loading, in case Start is waiting
+  function buildDataReady() {
+    if (build.pendingStart && !$('tab-build').hidden && !$('buildSetup').hidden) {
+      build.pendingStart = false;
+      $('buildSetupNote').hidden = true;
+      build.lvl = selectedVal('buildLevel');
+      if (buildPools()) nextSentence();
+    }
+  }
 
   function nextSentence() {
     var pool = build.pools[build.lvl];
