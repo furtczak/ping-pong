@@ -418,6 +418,29 @@
 
   sizePad();
 
+  // reusable: rank candidate characters for a set of strokes (used by the
+  // sentence-writing pad too) — same merged shape + stroke-order engines
+  function rankStrokes(rawStrokes, limit, cb) {
+    var votes = new Map();
+    function addVotes(list, weight) {
+      list.forEach(function (ch, i) { votes.set(ch, (votes.get(ch) || 0) + (14 - i) * weight); });
+    }
+    if (shapeBuckets) addVotes(shapeMatch(rawStrokes, 12), 2);
+    var pending = loadedSets.length;
+    function done() {
+      cb(Array.from(votes.entries()).sort(function (a, b) { return b[1] - a[1]; })
+        .slice(0, limit).map(function (e) { return e[0]; }));
+    }
+    if (!pending) { done(); return; }
+    var analyzed = new HanziLookup.AnalyzedCharacter(rawStrokes);
+    loadedSets.forEach(function (name) {
+      new HanziLookup.Matcher(name).match(analyzed, 12, function (matches) {
+        addVotes((matches || []).map(function (m) { return m.character; }), 1);
+        if (--pending === 0) done();
+      });
+    });
+  }
+
   // ---------------------------------------------------------------- composer
   function setWord(w) {
     word = w;
@@ -2761,6 +2784,281 @@
     row.appendChild(lit);
     return row;
   }
+
+  // ---------------------------------------------------------------- sentence writing (live)
+  var build = { pool: [], sent: null, cells: [], idx: 0, written: 0, skipped: 0, lvl: 1,
+                strokes: [], drawing: false, current: null, seq: 0, pools: null, ctx: null, hintAnim: null };
+  var PUNCT = '。！？，、…';
+
+  (function () {
+    var box = $('buildLevel');
+    [[1, 'HSK 1'], [2, 'HSK 2'], [3, 'HSK 3+']].forEach(function (o, i) {
+      var b = document.createElement('button');
+      b.textContent = o[1];
+      b.setAttribute('data-v', o[0]);
+      if (i === 0) b.classList.add('sel');
+      box.appendChild(b);
+    });
+    selectable(box);
+  })();
+
+  function buildPools() {
+    if (build.pools) return true;
+    if (!dict || !sentences || !medians) return false;
+    // min positive HSK per single simplified character
+    var charHsk = new Map();
+    for (var i = 0; i < dict.length; i++) {
+      var r = dict[i];
+      if (r[0].length === 1 && r[5]) {
+        var cur = charHsk.get(r[0]);
+        if (!cur || r[5] < cur) charHsk.set(r[0], r[5]);
+      }
+    }
+    var pools = { 1: [], 2: [], 3: [] };
+    var seen = {};
+    for (i = 0; i < sentences.length; i++) {
+      var zh = sentences[i][0], en = sentences[i][1];
+      if (seen[zh]) continue;
+      var han = [], ok = true, maxH = 0;
+      for (var j = 0; j < zh.length; j++) {
+        var ch = zh[j];
+        if (/[㐀-鿿]/.test(ch)) {
+          if (!medians[ch] && !medians[toSimp(ch)]) { ok = false; break; }
+          han.push(ch);
+          var h = charHsk.get(ch) || charHsk.get(toSimp(ch)) || 7;
+          if (h > maxH) maxH = h;
+        } else if (PUNCT.indexOf(ch) < 0) { ok = false; break; }
+      }
+      if (!ok || han.length < 2 || han.length > 9) continue;
+      seen[zh] = true;
+      var rec = { zh: zh, en: en, len: han.length };
+      if (maxH <= 2 && han.length <= 4) pools[1].push(rec);
+      if (maxH <= 4 && han.length <= 6) pools[2].push(rec);
+      if (maxH <= 6 && han.length <= 8) pools[3].push(rec);
+    }
+    build.pools = pools;
+    return true;
+  }
+
+  $('buildStart').addEventListener('click', function () {
+    if (!buildPools()) { $('buildSetupNote').hidden = false; return; }
+    build.lvl = selectedVal('buildLevel');
+    nextSentence();
+  });
+
+  function nextSentence() {
+    var pool = build.pools[build.lvl];
+    if (!pool || !pool.length) { pool = build.pools[3]; }
+    build.sent = pick(pool);
+    build.idx = 0; build.written = 0; build.skipped = 0;
+    build.strokes = []; build.current = null;
+    $('buildSetup').hidden = true; $('buildDone').hidden = true; $('buildPlay').hidden = false;
+    $('buildEn').textContent = build.sent.en;
+    renderSlots();
+    sizeSpad();
+    advanceTarget();
+  }
+
+  function renderSlots() {
+    var box = $('buildSlots');
+    box.innerHTML = '';
+    build.cells = [];
+    var zh = build.sent.zh;
+    for (var i = 0; i < zh.length; i++) {
+      var ch = zh[i];
+      var isHan = /[㐀-鿿]/.test(ch);
+      var slot = document.createElement('div');
+      slot.className = 'bslot' + (isHan ? '' : ' punct');
+      slot.setAttribute('data-ch', ch);
+      if (isHan) {
+        var row = bestRow(ch) || bestRow(toSimp(ch));
+        var py = row ? row[2].split(/\s+/)[0] : (charPinyin.get(ch) ? charPinyin.get(ch).split(/\s+/)[0] : '');
+        slot.innerHTML = '<span class="bslot-py">' + (py ? pinyinHtml(py) : '') + '</span>' +
+          '<span class="bslot-hz"></span>';
+      } else {
+        slot.innerHTML = '<span class="bslot-py"></span><span class="bslot-hz">' + esc(ch) + '</span>';
+      }
+      box.appendChild(slot);
+      build.cells.push({ el: slot, ch: ch, han: isHan, filled: !isHan });
+    }
+  }
+
+  function advanceTarget() {
+    build.cells.forEach(function (c) { c.el.classList.remove('active'); });
+    while (build.idx < build.cells.length && build.cells[build.idx].filled) build.idx++;
+    if (build.idx >= build.cells.length) { finishBuild(); return; }
+    var cell = build.cells[build.idx];
+    cell.el.classList.add('active');
+    var row = bestRow(cell.ch) || bestRow(toSimp(cell.ch));
+    $('buildTargetPy').innerHTML = row ? pinyinHtml(row[2]) : (charPinyin.get(cell.ch) ? pinyinHtml(charPinyin.get(cell.ch)) : cell.ch);
+    var done = build.cells.filter(function (c) { return c.filled; }).length;
+    $('buildProgress').textContent = 'Sentence · ' + done + ' / ' + build.cells.length + ' written';
+    clearSpad();
+    cell.el.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+
+  function fillCell(cell, skipped) {
+    cell.el.querySelector('.bslot-hz').textContent = cell.ch;
+    cell.el.classList.remove('active');
+    cell.el.classList.add(skipped ? 'skipped' : 'done');
+    cell.filled = true;
+    if (!skipped) { build.written++; speak(cell.ch); } else { build.skipped++; }
+    build.idx++;
+    setTimeout(advanceTarget, 350);
+  }
+
+  function currentTarget() {
+    return build.idx < build.cells.length ? build.cells[build.idx] : null;
+  }
+
+  function targetStrokeCount(ch) {
+    var m = medians[ch] || medians[toSimp(ch)];
+    if (!m) return 0;
+    return m.length / (10 * 2);
+  }
+
+  // ---- spad drawing ----
+  var spad = $('spad');
+  function sizeSpad() {
+    var cssW = spad.clientWidth || 300;
+    var dpr = window.devicePixelRatio || 1;
+    spad.height = spad.width = Math.round(cssW * dpr);
+    build.ctx = spad.getContext('2d');
+    build.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    redrawSpad();
+  }
+  window.addEventListener('resize', function () { if (!$('tab-build').hidden && !$('buildPlay').hidden) sizeSpad(); });
+
+  function spadInk() {
+    var g = build.ctx;
+    g.lineWidth = 7; g.lineCap = 'round'; g.lineJoin = 'round';
+    g.strokeStyle = getComputedStyle(document.body).color;
+  }
+  function redrawSpad() {
+    if (!build.ctx) return;
+    build.ctx.clearRect(0, 0, spad.width, spad.height);
+    spadInk();
+    build.strokes.concat(build.current ? [build.current] : []).forEach(function (st) {
+      build.ctx.beginPath();
+      build.ctx.moveTo(st[0][0], st[0][1]);
+      for (var i = 1; i < st.length; i++) build.ctx.lineTo(st[i][0], st[i][1]);
+      build.ctx.stroke();
+    });
+  }
+  function spadPos(ev) {
+    var r = spad.getBoundingClientRect();
+    return [ev.clientX - r.left, ev.clientY - r.top];
+  }
+  spad.addEventListener('pointerdown', function (ev) {
+    ev.preventDefault();
+    spad.setPointerCapture(ev.pointerId);
+    build.drawing = true;
+    build.current = [spadPos(ev)];
+    spadInk();
+  });
+  spad.addEventListener('pointermove', function (ev) {
+    if (!build.drawing) return;
+    var p = spadPos(ev), last = build.current[build.current.length - 1];
+    build.current.push(p);
+    build.ctx.beginPath();
+    build.ctx.moveTo(last[0], last[1]);
+    build.ctx.lineTo(p[0], p[1]);
+    build.ctx.stroke();
+  });
+  function spadEnd() {
+    if (!build.drawing) return;
+    build.drawing = false;
+    if (build.current && build.current.length > 1) {
+      build.strokes.push(build.current);
+      buildRecognize();
+    }
+    build.current = null;
+  }
+  spad.addEventListener('pointerup', spadEnd);
+  spad.addEventListener('pointercancel', spadEnd);
+
+  function clearSpad() {
+    build.strokes = []; build.current = null;
+    redrawSpad();
+    $('buildCand').innerHTML = '';
+    $('spadStatus').textContent = build.hintAnim ? '' : '';
+    $('spadStatus').style.display = 'none';
+  }
+  $('buildClearPad').addEventListener('click', clearSpad);
+  $('buildUndo').addEventListener('click', function () {
+    build.strokes.pop();
+    redrawSpad();
+    if (build.strokes.length) buildRecognize(); else $('buildCand').innerHTML = '';
+  });
+
+  function buildRecognize() {
+    var target = currentTarget();
+    if (!target) return;
+    if (!recognizerReady && !shapeBuckets) { return; }
+    var seq = ++build.seq;
+    rankStrokes(build.strokes, 10, function (ranked) {
+      if (seq !== build.seq) return;
+      var box = $('buildCand');
+      box.innerHTML = '';
+      var matched = ranked.some(function (c) { return c === target.ch || toSimp(c) === toSimp(target.ch); });
+      ranked.forEach(function (ch) {
+        var b = document.createElement('button');
+        b.textContent = ch;
+        var isTarget = (ch === target.ch || toSimp(ch) === toSimp(target.ch));
+        if (isTarget) b.classList.add('cand-ok');
+        b.addEventListener('click', function () {
+          if (isTarget) fillCell(target, false);
+          else { b.classList.add('cand-bad'); setTimeout(function () { b.classList.remove('cand-bad'); }, 500); }
+        });
+        box.appendChild(b);
+      });
+      // auto-accept once enough strokes drawn and the target is the top guess
+      var need = targetStrokeCount(target.ch);
+      if (matched && ranked[0] && (ranked[0] === target.ch || toSimp(ranked[0]) === toSimp(target.ch)) &&
+          (!need || build.strokes.length >= need)) {
+        setTimeout(function () { if (seq === build.seq && currentTarget() === target) fillCell(target, false); }, 250);
+      }
+    });
+  }
+
+  // hint: animate the stroke order of the current character on the pad
+  $('buildHint').addEventListener('click', function () {
+    var target = currentTarget();
+    if (!target) return;
+    var mch = medians[target.ch] ? target.ch : (medians[toSimp(target.ch)] ? toSimp(target.ch) : null);
+    if (!mch) return;
+    build.strokes = []; build.current = null;
+    var animate = makeStrokeAnimator(spad, mch);
+    animate();
+  });
+  $('buildSkipChar').addEventListener('click', function () {
+    var target = currentTarget();
+    if (target) fillCell(target, true);
+  });
+  $('buildQuit').addEventListener('click', finishBuild);
+
+  function finishBuild() {
+    $('buildPlay').hidden = true;
+    $('buildDone').hidden = false;
+    var zh = build.sent.zh;
+    $('buildResult').innerHTML =
+      '<div class="zh">' + rubyHtml(zh, null) + ' <button class="speak" data-say="' + esc(zh) + '">🔊</button></div>' +
+      '<div class="dlg-split">' + hintChipsHtml(zh, true) + '</div>' +
+      '<div class="dlg-en">' + esc(build.sent.en) + '</div>';
+    var res = $('buildResult');
+    res.className = 'dlg-lines split';
+    bindSpeakButtons(res);
+    speak(zh);
+    var total = build.cells.filter(function (c) { return c.han; }).length;
+    $('buildStats').textContent = build.skipped
+      ? 'You wrote ' + build.written + ' of ' + total + ' characters yourself (' + build.skipped + ' shown).'
+      : 'You wrote all ' + total + ' characters yourself! 🌟';
+  }
+
+  $('buildNext').addEventListener('click', nextSentence);
+  $('buildNewLevel').addEventListener('click', function () {
+    $('buildDone').hidden = true; $('buildSetup').hidden = false;
+  });
 
   // ---------------------------------------------------------------- PWA
   if ('serviceWorker' in navigator) {

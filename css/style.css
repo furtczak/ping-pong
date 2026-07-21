@@ -104,7 +104,7 @@ button.wide { width: 100%; margin-top: 8px; }
 .pad-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 6px; flex-wrap: wrap; }
 .pad-head h2 { margin: 0; }
 .pad-wrap { position: relative; display: flex; justify-content: center; }
-#pad {
+#pad, #spad {
   width: min(100%, 380px); aspect-ratio: 1;
   border: 2px solid var(--line); border-radius: 14px;
   touch-action: none;
@@ -303,6 +303,24 @@ button.primary { background: var(--ink); color: var(--card); border-color: var(-
 .dlg-lines.split .dlg-split { display: flex; }
 .bubble .speak { float: right; margin-left: 6px; }
 .bubble .who { font-size: 11px; font-weight: 700; color: var(--muted); }
+
+/* Sentence writing */
+.build-en { font-size: 15px; color: var(--muted); margin-bottom: 10px; }
+.build-slots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.bslot { display: flex; flex-direction: column; align-items: center; min-width: 42px; }
+.bslot-py { font-size: 12px; font-weight: 600; min-height: 15px; }
+.bslot-hz {
+  font-size: 30px; line-height: 1.2; min-width: 40px; min-height: 44px;
+  display: grid; place-items: center;
+  border-bottom: 3px solid var(--line); color: var(--ink);
+}
+.bslot.punct .bslot-hz { border-bottom: 0; }
+.bslot.active .bslot-hz { border-bottom-color: var(--accent); background: var(--accent-soft); border-radius: 8px 8px 0 0; }
+.bslot.done .bslot-hz { border-bottom-color: var(--tone2); }
+.bslot.skipped .bslot-hz { color: var(--muted); border-bottom-color: var(--tone1); }
+.build-target-py { text-transform: none; letter-spacing: 0; }
+#buildCand button.cand-ok { border-color: var(--tone2); border-width: 2px; }
+#buildCand button.cand-bad { border-color: var(--tone1); color: var(--tone1); animation: micpulse .4s; }
 
 /* Speech practice */
 .typebar { display: flex; gap: 8px; }
