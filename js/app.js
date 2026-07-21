@@ -853,6 +853,7 @@
     TABS.forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
     if (tab === 'words') renderWords(false);
     if (tab === 'rules' && dict) renderRules();
+    if (tab === 'review') renderReview();
   }
 
   // ---------------------------------------------------------------- learn: shared helpers
@@ -1014,6 +1015,7 @@
 
   function answerCard(know) {
     var row = fc.deck[fc.i];
+    srsGrade(row[0], know);
     if (know) {
       fc.known++;
       fc.deck.splice(fc.i, 1);
@@ -1216,6 +1218,7 @@
     qz.answered = true;
     var q = qz.cur;
     var good = opt === q.correct;
+    if (!q.retry) srsGrade(q.word, good);
     $('quizAnswers').querySelectorAll('button[data-v]').forEach(function (b) {
       b.disabled = true;
       if (b.getAttribute('data-v') === q.correct) b.classList.add('good');
@@ -2921,6 +2924,7 @@
     cell.el.classList.remove('active');
     cell.el.classList.add(skipped ? 'skipped' : 'done');
     cell.filled = true;
+    if (cell.han) srsGrade(cell.ch, !skipped);
     if (!skipped) { build.written++; speak(cell.ch); } else { build.skipped++; }
     build.idx++;
     setTimeout(advanceTarget, 350);
@@ -3077,6 +3081,140 @@
   $('buildNext').addEventListener('click', nextSentence);
   $('buildNewLevel').addEventListener('click', function () {
     $('buildDone').hidden = true; $('buildSetup').hidden = false;
+  });
+
+  // ---------------------------------------------------------------- progress & spaced repetition
+  // One memory fed by every mode. Leitner-style boxes; saved in localStorage.
+  var SRS_KEY = 'xiezi.srs.v1';
+  var DAY = 86400000;
+  var BOX_DAYS = [0, 1, 3, 7, 16, 35, 90]; // interval per box after a correct answer
+  var srs = (function () {
+    var s;
+    try { s = JSON.parse(localStorage.getItem(SRS_KEY)) || {}; } catch (e) { s = {}; }
+    s.w = s.w || {};        // word -> { b: box, due: ms, seen: n, last: ms }
+    s.goal = s.goal || 20;
+    s.streak = s.streak || 0;
+    s.lastDay = s.lastDay || '';
+    s.days = s.days || {};  // 'y-m-d' -> reviews that day
+    return s;
+  })();
+  function saveSrs() { try { localStorage.setItem(SRS_KEY, JSON.stringify(srs)); } catch (e) {} }
+  function dayStr(d) { d = d || new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+
+  function srsGrade(word, good) {
+    if (!word || !/[㐀-鿿]/.test(word)) return;
+    var rec = srs.w[word] || { b: 0, due: 0, seen: 0 };
+    rec.seen++;
+    rec.b = good ? Math.min(BOX_DAYS.length - 1, rec.b + 1) : Math.max(0, rec.b - 2);
+    rec.due = Date.now() + (good ? BOX_DAYS[rec.b] * DAY : 60000); // wrong: comes back in ~1 min
+    rec.last = Date.now();
+    srs.w[word] = rec;
+    var t = dayStr();
+    if (srs.lastDay !== t) {
+      srs.streak = (srs.lastDay === dayStr(new Date(Date.now() - DAY))) ? srs.streak + 1 : 1;
+      srs.lastDay = t;
+    }
+    srs.days[t] = (srs.days[t] || 0) + 1;
+    saveSrs();
+    if (!$('tab-review').hidden && !$('reviewHome').hidden) renderReview();
+  }
+
+  function srsDue() {
+    var now = Date.now(), out = [];
+    for (var w in srs.w) if (srs.w[w].due <= now) out.push(w);
+    return out.sort(function (a, b) { return srs.w[a].due - srs.w[b].due; });
+  }
+  function srsStats() {
+    var words = Object.keys(srs.w), learned = 0;
+    words.forEach(function (w) { if (srs.w[w].b >= 3) learned++; });
+    return { seen: words.length, learned: learned, due: srsDue().length,
+             streak: srs.streak, today: srs.days[dayStr()] || 0, goal: srs.goal };
+  }
+
+  (function () {
+    var box = $('revGoal');
+    [10, 20, 30, 50].forEach(function (g) {
+      var b = document.createElement('button');
+      b.textContent = g;
+      b.setAttribute('data-v', g);
+      if (g === srs.goal) b.classList.add('sel');
+      box.appendChild(b);
+    });
+    selectable(box);
+    box.addEventListener('click', function (ev) {
+      if (!ev.target.closest('button')) return;
+      srs.goal = selectedVal('revGoal');
+      saveSrs();
+      renderReview();
+    });
+  })();
+
+  function renderReview() {
+    var st = srsStats();
+    $('revStreak').textContent = st.streak;
+    $('revLearned').textContent = st.learned;
+    $('revSeen').textContent = st.seen;
+    $('revToday').textContent = st.today;
+    $('revGoalVal').textContent = st.goal;
+    $('revBar').style.width = Math.min(100, Math.round(100 * st.today / st.goal)) + '%';
+    $('revDueCount').textContent = st.due;
+    $('revStart').hidden = st.due === 0;
+    $('revEmpty').hidden = st.due > 0;
+  }
+
+  var rev = { queue: [], done: 0, flipped: false };
+  $('revStart').addEventListener('click', function () {
+    var due = srsDue();
+    if (!due.length) return;
+    rev.queue = due.slice(0, 40);
+    rev.done = 0;
+    $('reviewHome').hidden = true; $('reviewDone').hidden = true; $('reviewPlay').hidden = false;
+    showRevCard();
+  });
+
+  function showRevCard() {
+    if (!rev.queue.length) return endReview();
+    rev.flipped = false;
+    var w = rev.queue[0];
+    var row = bestRow(w) || bestRow(toSimp(w));
+    $('revProgress').textContent = rev.done + ' reviewed · ' + rev.queue.length + ' left';
+    $('revFront').hidden = false; $('revBack').hidden = true;
+    $('revFront').innerHTML = esc(w);
+    if (row) {
+      var defs = row[3]; if (defs.length > 120) defs = defs.slice(0, 120) + '…';
+      $('revBack').innerHTML = '<div class="fc-hz">' + esc(w) + '</div>' +
+        '<div class="fc-py">' + pinyinHtml(row[2]) + '</div><div class="fc-def">' + esc(defs) + '</div>';
+    } else {
+      $('revBack').innerHTML = '<div class="fc-hz">' + esc(w) + '</div>';
+    }
+  }
+  function flipRev() {
+    rev.flipped = !rev.flipped;
+    $('revFront').hidden = rev.flipped;
+    $('revBack').hidden = !rev.flipped;
+    if (rev.flipped) speak(rev.queue[0]);
+  }
+  function gradeRev(good) {
+    var w = rev.queue.shift();
+    srsGrade(w, good);
+    rev.done++;
+    if (!good) rev.queue.push(w); // see it again this session
+    if (!rev.queue.length) return endReview();
+    showRevCard();
+  }
+  function endReview() {
+    $('reviewPlay').hidden = true; $('reviewDone').hidden = false;
+    $('revDoneStats').textContent = 'You reviewed ' + rev.done + ' card' + (rev.done === 1 ? '' : 's') +
+      '. Streak: ' + srs.streak + ' day' + (srs.streak === 1 ? '' : 's') + ' 🔥';
+    renderReview();
+  }
+  $('revCard').addEventListener('click', flipRev);
+  $('revGood').addEventListener('click', function () { gradeRev(true); });
+  $('revAgain').addEventListener('click', function () { gradeRev(false); });
+  $('revQuit').addEventListener('click', endReview);
+  $('revBackHome').addEventListener('click', function () {
+    $('reviewDone').hidden = true; $('reviewHome').hidden = false;
+    renderReview();
   });
 
   // ---------------------------------------------------------------- PWA
