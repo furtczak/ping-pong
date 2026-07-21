@@ -29,12 +29,20 @@
   <button data-tab="quiz">🎯<span>Quiz</span></button>
   <button data-tab="build">📝<span>Sentence</span></button>
   <button data-tab="talk">💬<span>Talk</span></button>
+  <button data-tab="tones">🎵<span>Tones</span></button>
   <button data-tab="words">📚<span>Words</span></button>
   <button data-tab="rules">🧱<span>Rules</span></button>
   <button data-tab="review">📈<span>Review</span></button>
 </nav>
 
 <div id="tab-dict">
+  <!-- Search by pinyin or English -->
+  <section class="card search-card">
+    <input id="searchInput" type="text" inputmode="text" autocomplete="off" autocapitalize="off"
+      placeholder="🔎 Search pinyin (ai) or English (love)…">
+    <div id="searchResults" class="search-results" hidden></div>
+  </section>
+
   <!-- Composer: the word being built -->
   <section class="composer card">
     <div class="composer-row">
@@ -267,6 +275,35 @@
   <div id="rulesList"></div>
 </div>
 
+<div id="tab-tones" hidden>
+  <section class="card" id="tonesSetup">
+    <h2>Tone trainer</h2>
+    <p class="muted">Tones are the hardest part of Chinese. Listen to a character and pick its tone. The four tones: <b>1</b> stays high and flat, <b>2</b> rises, <b>3</b> dips down then up, <b>4</b> falls sharply.</p>
+    <h3>Level</h3>
+    <div class="opt-row" id="tonesLevel"></div>
+    <button class="primary wide" id="tonesStart">Start</button>
+    <p class="muted" id="tonesNote" hidden></p>
+  </section>
+
+  <section class="card" id="tonesPlay" hidden>
+    <div class="learn-top"><span id="tonesProgress" class="muted"></span><button class="ghost small" id="tonesQuit">End</button></div>
+    <div class="tone-listen">
+      <button id="tonesReplay" class="tone-replay">🔊</button>
+      <span class="muted">Tap to hear it again</span>
+    </div>
+    <div id="toneReveal" class="tone-reveal"></div>
+    <div class="tone-grid" id="toneGrid"></div>
+    <button id="tonesNext" class="primary wide" hidden>Next →</button>
+  </section>
+
+  <section class="card" id="tonesDone" hidden>
+    <h2>Tone round complete! 🎉</h2>
+    <p id="tonesStats"></p>
+    <button class="primary wide" id="tonesAgain">Again</button>
+    <button class="wide" id="tonesNewLevel">Change level</button>
+  </section>
+</div>
+
 <div id="tab-review" hidden>
   <section class="card" id="reviewHome">
     <h2>Your progress</h2>
@@ -312,7 +349,7 @@
     <p>Runs entirely in your browser — free &amp; offline after first load.</p>
     <p>Dictionary: <a href="https://cc-cedict.org/">CC-CEDICT</a> (CC BY-SA 4.0) · Sentences: <a href="https://tatoeba.org/">Tatoeba</a> (CC BY 2.0 FR) · Recognition: <a href="https://github.com/gugray/HanziLookupJS">HanziLookupJS</a> (LGPL)</p>
     <p>Tip: in Safari tap <strong>Share → Add to Home Screen</strong> to install as an app.</p>
-    <p id="appVersion">version 25</p>
+    <p id="appVersion">version 26</p>
   </footer>
 </main>
 

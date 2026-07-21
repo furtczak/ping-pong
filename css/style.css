@@ -305,6 +305,42 @@ button.primary { background: var(--ink); color: var(--card); border-color: var(-
 .bubble .speak { float: right; margin-left: 6px; }
 .bubble .who { font-size: 11px; font-weight: 700; color: var(--muted); }
 
+/* Dictionary search */
+.search-card { padding: 10px; }
+#searchInput {
+  width: 100%; font: inherit; color: inherit;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px;
+}
+#searchInput:focus { outline: 2px solid var(--accent); border-color: transparent; }
+.search-results { display: grid; gap: 6px; margin-top: 8px; }
+.search-hit {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  text-align: left; background: var(--bg); border-radius: 10px; padding: 8px 12px;
+}
+.search-hit .opt-gloss { color: var(--muted); font-size: 13px; }
+
+/* Tone trainer */
+.tone-listen { display: flex; align-items: center; gap: 10px; justify-content: center; margin: 8px 0 12px; }
+.tone-replay { font-size: 30px; width: 64px; height: 64px; border-radius: 50%; }
+.tone-reveal { text-align: center; min-height: 44px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin-bottom: 12px; }
+.tone-reveal .tone-hz { font-size: 34px; }
+.tone-reveal .tone-py { font-size: 20px; font-weight: 600; }
+.tone-reveal .tone-gloss { color: var(--muted); font-size: 14px; }
+.tone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tone-opt {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 14px 4px; border-radius: 14px; background: var(--bg);
+}
+.tone-opt .tone-num { font-size: 24px; font-weight: 700; }
+.tone-opt .tone-name { font-size: 12px; color: var(--muted); }
+.tone-opt.t1 .tone-num { color: var(--tone1); }
+.tone-opt.t2 .tone-num { color: var(--tone2); }
+.tone-opt.t3 .tone-num { color: var(--tone3); }
+.tone-opt.t4 .tone-num { color: var(--tone4); }
+.tone-opt.good { border-color: var(--tone2); border-width: 2px; }
+.tone-opt.bad { border-color: var(--tone1); border-width: 2px; }
+.tone-opt:disabled { opacity: .9; }
+
 /* Progress & review */
 .rev-stats { display: flex; gap: 8px; margin-bottom: 14px; }
 .rev-stat { flex: 1; text-align: center; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 4px; }

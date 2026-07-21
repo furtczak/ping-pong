@@ -3083,6 +3083,186 @@
     $('buildDone').hidden = true; $('buildSetup').hidden = false;
   });
 
+  // ---------------------------------------------------------------- dictionary search (pinyin / English)
+  var searchPy = null, searchEn = null; // parallel normalized indexes, built lazily
+  function buildSearchIndex() {
+    if (searchPy) return true;
+    if (!dict) return false;
+    searchPy = new Array(dict.length);
+    searchEn = new Array(dict.length);
+    for (var i = 0; i < dict.length; i++) {
+      searchPy[i] = dict[i][2].toLowerCase().replace(/u:/g, 'u').replace(/[1-5]/g, '').replace(/\s+/g, '');
+      searchEn[i] = dict[i][3].toLowerCase();
+    }
+    return true;
+  }
+
+  function runSearch(qRaw) {
+    var box = $('searchResults');
+    var q = qRaw.trim().toLowerCase();
+    if (!q) { box.hidden = true; box.innerHTML = ''; return; }
+    if (!buildSearchIndex()) { box.hidden = false; box.innerHTML = '<p class="muted">Loading dictionary…</p>'; return; }
+    var han = /[㐀-鿿]/.test(q);
+    var qp = q.replace(/\s+/g, '').replace(/[1-5]/g, '');
+    var hits = [];
+    for (var i = 0; i < dict.length; i++) {
+      var row = dict[i], score = 0;
+      if (han) {
+        if (row[0] === q || row[1] === q) score = 100;
+        else if (row[0].lastIndexOf(q, 0) === 0) score = 70;
+        else if (row[0].indexOf(q) >= 0) score = 30;
+      } else {
+        var py = searchPy[i], en = searchEn[i];
+        if (py === qp) score = 100;
+        else if (py.lastIndexOf(qp, 0) === 0) score = 70;
+        else if (en.split(/[^a-z]+/).indexOf(q) >= 0) score = 60;
+        else if (q.length >= 3 && en.indexOf(q) >= 0) score = 40;
+        else if (qp.length >= 2 && py.indexOf(qp) >= 0) score = 25;
+      }
+      if (score) hits.push([i, score + Math.min(20, row[4] / 40) - row[0].length]);
+    }
+    hits.sort(function (a, b) { return b[1] - a[1]; });
+    var seen = {}, out = [];
+    for (i = 0; i < hits.length && out.length < 30; i++) {
+      var r = dict[hits[i][0]];
+      if (seen[r[0] + r[2]]) continue;
+      seen[r[0] + r[2]] = true;
+      out.push(r);
+    }
+    box.hidden = false;
+    if (!out.length) { box.innerHTML = '<p class="muted">No matches for “' + esc(qRaw) + '”.</p>'; return; }
+    box.innerHTML = '';
+    out.forEach(function (row) {
+      var b = document.createElement('button');
+      b.className = 'search-hit';
+      b.innerHTML = '<span class="opt-hz">' + esc(row[0]) + '</span>' +
+        '<span class="opt-py">' + pinyinHtml(row[2]) + '</span>' +
+        '<span class="opt-gloss">' + esc(rowGloss(row)) + '</span>';
+      b.addEventListener('click', function () {
+        setWord(row[0]);
+        $('searchInput').value = '';
+        box.hidden = true; box.innerHTML = '';
+        $('dictCard').scrollIntoView({ block: 'start', behavior: 'smooth' });
+      });
+      box.appendChild(b);
+    });
+  }
+
+  var searchTimer = null;
+  $('searchInput').addEventListener('input', function () {
+    var v = this.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () { runSearch(v); }, 120);
+  });
+
+  // ---------------------------------------------------------------- tone trainer
+  var TONE_INFO = [
+    { n: 1, mark: 'ˉ', name: 'high & flat' },
+    { n: 2, mark: 'ˊ', name: 'rising' },
+    { n: 3, mark: 'ˇ', name: 'dip' },
+    { n: 4, mark: 'ˋ', name: 'falling' }
+  ];
+  var tn = { pool: [], queue: [], cur: null, right: 0, total: 0, planned: 10, answered: false };
+
+  (function () {
+    var box = $('tonesLevel');
+    [[1, 'HSK 1'], [2, 'HSK 2'], [3, 'HSK 3+']].forEach(function (o, i) {
+      var b = document.createElement('button');
+      b.textContent = o[1];
+      b.setAttribute('data-v', o[0]);
+      if (i === 0) b.classList.add('sel');
+      box.appendChild(b);
+    });
+    selectable(box);
+  })();
+
+  function tonePool(level) {
+    var maxH = level === 1 ? 1 : level === 2 ? 2 : 4;
+    var out = [], seen = {};
+    for (var i = 0; i < dict.length; i++) {
+      var row = dict[i];
+      if (row[0].length !== 1 || !row[5] || row[5] > maxH || /[A-Z]/.test(row[2]) || seen[row[0]]) continue;
+      var syl = row[2].split(/\s+/)[0];
+      var m = syl.match(/[1-4]$/);
+      if (!m) continue;
+      seen[row[0]] = true;
+      out.push({ ch: row[0], tone: +m[0], row: row });
+    }
+    return out;
+  }
+
+  $('tonesStart').addEventListener('click', function () {
+    if (!window.speechSynthesis) {
+      $('tonesNote').hidden = false;
+      $('tonesNote').textContent = 'The tone trainer needs your device to speak Chinese, but no speech support was found here. Try Safari on iPhone or Chrome.';
+      return;
+    }
+    if (!dict) { $('tonesNote').hidden = false; $('tonesNote').textContent = 'Loading dictionary…'; return; }
+    tn.pool = tonePool(selectedVal('tonesLevel'));
+    if (tn.pool.length < 4) { $('tonesNote').hidden = false; $('tonesNote').textContent = 'Not enough characters at this level.'; return; }
+    tn.right = 0; tn.total = 0;
+    $('tonesSetup').hidden = true; $('tonesDone').hidden = true; $('tonesPlay').hidden = false;
+    toneNext();
+  });
+
+  function toneNext() {
+    tn.answered = false;
+    tn.cur = pick(tn.pool);
+    tn.total++;
+    $('tonesProgress').textContent = 'Question ' + tn.total + ' / ' + tn.planned + ' · score ' + tn.right;
+    $('toneReveal').innerHTML = '<span class="muted">Which tone did you hear?</span>';
+    $('tonesNext').hidden = true;
+    var grid = $('toneGrid');
+    grid.innerHTML = '';
+    TONE_INFO.forEach(function (t) {
+      var b = document.createElement('button');
+      b.className = 'tone-opt t' + t.n;
+      b.innerHTML = '<span class="tone-num">' + t.n + ' ' + t.mark + '</span><span class="tone-name">' + t.name + '</span>';
+      b.addEventListener('click', function () { answerTone(t.n, b); });
+      grid.appendChild(b);
+    });
+    setTimeout(function () { speak(tn.cur.ch); }, 250);
+  }
+
+  function answerTone(tone, btn) {
+    if (tn.answered) return;
+    tn.answered = true;
+    var correct = tn.cur.tone;
+    var good = tone === correct;
+    srsGrade(tn.cur.ch, good);
+    if (good) tn.right++;
+    $('toneGrid').querySelectorAll('.tone-opt').forEach(function (b, i) {
+      if (i + 1 === correct) b.classList.add('good');
+    });
+    if (!good) btn.classList.add('bad');
+    var row = tn.cur.row;
+    $('toneReveal').innerHTML = '<span class="tone-hz">' + esc(tn.cur.ch) + '</span>' +
+      '<span class="tone-py">' + pinyinHtml(row[2]) + '</span>' +
+      '<span class="tone-gloss">' + esc(rowGloss(row)) + '</span>' +
+      '<button class="speak" data-say="' + esc(tn.cur.ch) + '">🔊</button>';
+    bindSpeakButtons($('toneReveal'));
+    $('tonesProgress').textContent = 'Question ' + tn.total + ' / ' + tn.planned + ' · score ' + tn.right;
+    if (tn.total >= tn.planned) {
+      $('tonesNext').textContent = 'See results →';
+    }
+    $('tonesNext').hidden = false;
+  }
+
+  $('tonesReplay').addEventListener('click', function () { if (tn.cur) speak(tn.cur.ch); });
+  $('tonesNext').addEventListener('click', function () {
+    if (tn.total >= tn.planned) return endTones();
+    toneNext();
+  });
+  $('tonesQuit').addEventListener('click', endTones);
+  function endTones() {
+    $('tonesPlay').hidden = true; $('tonesDone').hidden = false;
+    var pct = tn.total ? Math.round(100 * tn.right / Math.min(tn.total, tn.planned)) : 0;
+    $('tonesStats').textContent = 'You got ' + tn.right + ' of ' + Math.min(tn.total, tn.planned) + ' tones right (' + pct + '%). ' +
+      (pct >= 80 ? 'Great ear! 👂' : 'Keep training — tones get easier with practice.');
+  }
+  $('tonesAgain').addEventListener('click', function () { $('tonesDone').hidden = true; $('tonesStart').click(); });
+  $('tonesNewLevel').addEventListener('click', function () { $('tonesDone').hidden = true; $('tonesSetup').hidden = false; });
+
   // ---------------------------------------------------------------- progress & spaced repetition
   // One memory fed by every mode. Leitner-style boxes; saved in localStorage.
   var SRS_KEY = 'xiezi.srs.v1';
