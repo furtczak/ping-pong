@@ -31,6 +31,7 @@
   <button data-tab="talk">💬<span>Talk</span></button>
   <button data-tab="words">📚<span>Words</span></button>
   <button data-tab="rules">🧱<span>Rules</span></button>
+  <button data-tab="review">📈<span>Review</span></button>
 </nav>
 
 <div id="tab-dict">
@@ -266,11 +267,52 @@
   <div id="rulesList"></div>
 </div>
 
+<div id="tab-review" hidden>
+  <section class="card" id="reviewHome">
+    <h2>Your progress</h2>
+    <div class="rev-stats">
+      <div class="rev-stat"><b id="revStreak">0</b><span>day streak 🔥</span></div>
+      <div class="rev-stat"><b id="revLearned">0</b><span>learned</span></div>
+      <div class="rev-stat"><b id="revSeen">0</b><span>seen</span></div>
+    </div>
+    <div class="rev-goal">
+      <span>Today: <b id="revToday">0</b> / <span id="revGoalVal">20</span> reviews</span>
+      <div class="rev-bar"><div id="revBar"></div></div>
+    </div>
+    <h3>Daily goal</h3>
+    <div class="opt-row" id="revGoal"></div>
+    <button class="primary wide" id="revStart">Review <span id="revDueCount">0</span> due words</button>
+    <p class="muted" id="revEmpty" hidden>Nothing due right now. Practice any mode — Cards, Quiz, Sentence — and the words you meet will come back here for spaced review. 🎉</p>
+    <p class="muted" style="font-size:12px">Everything you do across the app feeds one memory. Reviews are scheduled so you see a word again right before you’d forget it. Saved on this device only.</p>
+  </section>
+
+  <section class="card" id="reviewPlay" hidden>
+    <div class="learn-top"><span id="revProgress" class="muted"></span><button class="ghost small" id="revQuit">End</button></div>
+    <div class="fc-stage">
+      <div class="fc-card" id="revCard">
+        <div class="fc-front" id="revFront"></div>
+        <div class="fc-back" id="revBack" hidden></div>
+      </div>
+    </div>
+    <p class="muted center-note">tap the card to flip</p>
+    <div class="fc-btns">
+      <button id="revAgain">✗ Again</button>
+      <button id="revGood">✓ Got it</button>
+    </div>
+  </section>
+
+  <section class="card" id="reviewDone" hidden>
+    <h2>Review complete! 🎉</h2>
+    <p id="revDoneStats"></p>
+    <button class="wide" id="revBackHome">Back to progress</button>
+  </section>
+</div>
+
   <footer>
     <p>Runs entirely in your browser — free &amp; offline after first load.</p>
     <p>Dictionary: <a href="https://cc-cedict.org/">CC-CEDICT</a> (CC BY-SA 4.0) · Sentences: <a href="https://tatoeba.org/">Tatoeba</a> (CC BY 2.0 FR) · Recognition: <a href="https://github.com/gugray/HanziLookupJS">HanziLookupJS</a> (LGPL)</p>
     <p>Tip: in Safari tap <strong>Share → Add to Home Screen</strong> to install as an app.</p>
-    <p id="appVersion">version 24</p>
+    <p id="appVersion">version 25</p>
   </footer>
 </main>
 
