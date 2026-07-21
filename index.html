@@ -27,6 +27,7 @@
   <button data-tab="dict" class="active">✍️<span>Write</span></button>
   <button data-tab="cards">🃏<span>Cards</span></button>
   <button data-tab="quiz">🎯<span>Quiz</span></button>
+  <button data-tab="build">📝<span>Sentence</span></button>
   <button data-tab="talk">💬<span>Talk</span></button>
   <button data-tab="words">📚<span>Words</span></button>
   <button data-tab="rules">🧱<span>Rules</span></button>
@@ -159,6 +160,47 @@
   </section>
 </div>
 
+<div id="tab-build" hidden>
+  <section class="card" id="buildSetup">
+    <h2>Write the sentence</h2>
+    <p class="muted">A live sentence appears with its meaning and pinyin. Write each character by hand — as you get them right, the sentence fills in. Then hear it, see the word split and tap any word, just like everywhere else.</p>
+    <h3>Level</h3>
+    <div class="opt-row" id="buildLevel"></div>
+    <button class="primary wide" id="buildStart">Start</button>
+    <p class="muted" id="buildSetupNote" hidden>Loading…</p>
+  </section>
+
+  <section class="card" id="buildPlay" hidden>
+    <div class="learn-top"><span id="buildProgress" class="muted"></span><button class="ghost small" id="buildQuit">End</button></div>
+    <div class="build-en" id="buildEn"></div>
+    <div class="build-slots" id="buildSlots"></div>
+    <div class="pad-head">
+      <h2>Write: <span id="buildTargetPy" class="build-target-py"></span></h2>
+      <div>
+        <button id="buildHint" class="ghost small">👁 Show</button>
+        <button id="buildSkipChar" class="ghost small">⏭ Skip</button>
+      </div>
+    </div>
+    <div class="pad-wrap">
+      <canvas id="spad"></canvas>
+      <div id="spadStatus" class="pad-status"></div>
+    </div>
+    <div id="buildCand" class="candidates"></div>
+    <div class="prax-help">
+      <button id="buildUndo" class="ghost small">↩︎ Undo stroke</button>
+      <button id="buildClearPad" class="ghost small">Clear</button>
+    </div>
+  </section>
+
+  <section class="card" id="buildDone" hidden>
+    <h2>Sentence complete! 🎉</h2>
+    <div id="buildResult"></div>
+    <p id="buildStats" class="muted"></p>
+    <button class="primary wide" id="buildNext">Next sentence</button>
+    <button class="wide" id="buildNewLevel">Change level</button>
+  </section>
+</div>
+
 <div id="tab-talk" hidden>
   <section class="card">
     <h2>Everyday dialogues</h2>
@@ -228,7 +270,7 @@
     <p>Runs entirely in your browser — free &amp; offline after first load.</p>
     <p>Dictionary: <a href="https://cc-cedict.org/">CC-CEDICT</a> (CC BY-SA 4.0) · Sentences: <a href="https://tatoeba.org/">Tatoeba</a> (CC BY 2.0 FR) · Recognition: <a href="https://github.com/gugray/HanziLookupJS">HanziLookupJS</a> (LGPL)</p>
     <p>Tip: in Safari tap <strong>Share → Add to Home Screen</strong> to install as an app.</p>
-    <p id="appVersion">version 22</p>
+    <p id="appVersion">version 23</p>
   </footer>
 </main>
 
