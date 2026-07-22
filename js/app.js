@@ -476,11 +476,32 @@
   });
   $('speakWord').addEventListener('click', function () { speak(word); });
 
+  // voice + speed preference (shared by all speech in the app)
+  var voiceCfg = (function () {
+    var c;
+    try { c = JSON.parse(localStorage.getItem('xiezi.voice')) || {}; } catch (e) { c = {}; }
+    if (typeof c.rate !== 'number') c.rate = 0.85;
+    c.uri = c.uri || '';
+    return c;
+  })();
+  function saveVoiceCfg() { try { localStorage.setItem('xiezi.voice', JSON.stringify(voiceCfg)); } catch (e) {} }
+  function pickedVoice() {
+    if (!voiceCfg.uri || !window.speechSynthesis) return null;
+    var vs = speechSynthesis.getVoices();
+    for (var i = 0; i < vs.length; i++) if (vs[i].voiceURI === voiceCfg.uri) return vs[i];
+    return null;
+  }
+  function applyVoice(u) {
+    u.lang = 'zh-CN';
+    u.rate = voiceCfg.rate || 0.85;
+    var v = pickedVoice();
+    if (v) { u.voice = v; u.lang = v.lang; }
+  }
+
   function speak(text) {
     if (!text || !window.speechSynthesis) return;
     var u = new SpeechSynthesisUtterance(text);
-    u.lang = 'zh-CN';
-    u.rate = 0.85;
+    applyVoice(u);
     speechSynthesis.cancel();
     speechSynthesis.speak(u);
   }
@@ -862,6 +883,61 @@
     p.hidden = !p.hidden;
     if (!p.hidden) p.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
+
+  // voice & speed settings
+  function chineseVoices() {
+    if (!window.speechSynthesis) return [];
+    return speechSynthesis.getVoices().filter(function (v) {
+      var l = (v.lang || '').toLowerCase();
+      return l.indexOf('zh') === 0 || l.indexOf('cmn') === 0 || /chinese|mandarin|中文|普通话|國語|国语/i.test(v.name || '');
+    });
+  }
+  function populateVoices() {
+    var sel = $('voiceSelect');
+    var voices = chineseVoices();
+    if (!window.speechSynthesis) {
+      $('voiceNote').textContent = 'This browser has no speech support, so voice can’t be changed here.';
+      sel.disabled = true;
+      return;
+    }
+    if (!voices.length) {
+      $('voiceNote').textContent = 'No dedicated Chinese voice found on this device — your system default is used. Add a Chinese voice or keyboard in your device settings for the clearest pronunciation.';
+    } else {
+      $('voiceNote').textContent = voices.length + ' Chinese voice' + (voices.length > 1 ? 's' : '') + ' available. Pick the one you like best.';
+    }
+    sel.innerHTML = '<option value="">System default</option>';
+    voices.forEach(function (v) {
+      var o = document.createElement('option');
+      o.value = v.voiceURI;
+      o.textContent = v.name + ' (' + v.lang + ')';
+      if (v.voiceURI === voiceCfg.uri) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+  if (window.speechSynthesis) {
+    populateVoices();
+    speechSynthesis.onvoiceschanged = populateVoices;
+  } else {
+    populateVoices();
+  }
+  $('voiceRate').value = voiceCfg.rate;
+  $('voiceRateVal').textContent = (+voiceCfg.rate).toFixed(2) + '×';
+  $('voiceToggle').addEventListener('click', function () {
+    var p = $('voicePanel');
+    p.hidden = !p.hidden;
+    if (!p.hidden) { populateVoices(); p.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  });
+  $('voiceSelect').addEventListener('change', function () {
+    voiceCfg.uri = this.value;
+    saveVoiceCfg();
+    speak('你好');
+  });
+  $('voiceRate').addEventListener('input', function () {
+    voiceCfg.rate = +this.value;
+    $('voiceRateVal').textContent = voiceCfg.rate.toFixed(2) + '×';
+    saveVoiceCfg();
+  });
+  $('voiceTest').addEventListener('click', function () { speak('你好，我在学中文'); });
 
   // ---------------------------------------------------------------- learn: shared helpers
   function shuffle(a) {
@@ -2239,8 +2315,7 @@
     setTimeout(fire, fallback);
     if (!window.speechSynthesis) return;
     var u = new SpeechSynthesisUtterance(text);
-    u.lang = 'zh-CN';
-    u.rate = 0.85;
+    applyVoice(u);
     u.onend = fire;
     speechSynthesis.cancel();
     speechSynthesis.speak(u);
