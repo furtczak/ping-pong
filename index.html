@@ -350,8 +350,24 @@
   <footer>
     <p>Runs entirely in your browser — free &amp; offline after first load. Your progress is saved only on this device.</p>
     <p>Tip: in Safari tap <strong>Share → Add to Home Screen</strong> to install as an app.</p>
-    <p><button id="aboutToggle" class="ghost small">ℹ️ About, privacy &amp; licenses</button></p>
-    <p id="appVersion">version 27</p>
+    <p>
+      <button id="voiceToggle" class="ghost small">🔊 Voice &amp; speed</button>
+      <button id="aboutToggle" class="ghost small">ℹ️ About, privacy &amp; licenses</button>
+    </p>
+
+    <section id="voicePanel" class="about-panel" hidden>
+      <h3>Voice &amp; speed</h3>
+      <p class="muted" id="voiceNote"></p>
+      <label class="voice-field">Voice
+        <select id="voiceSelect"></select>
+      </label>
+      <label class="voice-field">Speed — <span id="voiceRateVal">0.85×</span>
+        <input type="range" id="voiceRate" min="0.5" max="1.2" step="0.05" value="0.85">
+      </label>
+      <button id="voiceTest" class="ghost">🔊 Test — 你好，我在学中文</button>
+    </section>
+
+    <p id="appVersion">version 28</p>
 
     <section id="aboutPanel" class="about-panel" hidden>
       <h3>About</h3>

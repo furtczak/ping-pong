@@ -446,6 +446,13 @@ footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--mut
 .about-panel p { font-size: 13px; line-height: 1.55; }
 .about-lic { font-size: 13px; line-height: 1.6; padding-left: 18px; margin: 4px 0; }
 .about-panel a { color: var(--accent); }
+.voice-field { display: block; font-size: 13px; font-weight: 600; margin: 10px 0; }
+.voice-field select, .voice-field input[type=range] {
+  display: block; width: 100%; margin-top: 5px; font: inherit; color: inherit;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px;
+}
+.voice-field input[type=range] { padding: 6px 0; accent-color: var(--accent); }
+#voiceTest { width: 100%; margin-top: 4px; }
 footer a { color: inherit; }
 
 .loadbar {
