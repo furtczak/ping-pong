@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>写字 Xiězì — Chinese Handwriting Dictionary</title>
 <meta name="description" content="Draw Chinese characters with your finger, get pinyin with tones, definitions and example sentences. Works offline.">
@@ -38,7 +40,7 @@
 <div id="tab-dict">
   <!-- Search by pinyin or English -->
   <section class="card search-card">
-    <input id="searchInput" type="text" inputmode="text" autocomplete="off" autocapitalize="off"
+    <input id="searchInput" type="text" inputmode="text" autocomplete="off" autocapitalize="off" maxlength="40"
       placeholder="🔎 Search pinyin (ai) or English (love)…">
     <div id="searchResults" class="search-results" hidden></div>
   </section>
@@ -54,7 +56,7 @@
       </div>
     </div>
     <div class="typebar">
-      <input id="typeInput" type="text" inputmode="text" placeholder="…or type / paste characters (e.g. 我爱你)" autocomplete="off">
+      <input id="typeInput" type="text" inputmode="text" placeholder="…or type / paste characters (e.g. 我爱你)" autocomplete="off" maxlength="20">
       <button id="micInput" class="ghost mic" title="Say it in Chinese" hidden>🎤</button>
     </div>
   </section>
@@ -244,7 +246,7 @@
       <div id="praxSuggBox" class="prax-sugg" hidden></div>
       <div class="prax-input" id="praxInput">
         <button id="praxMic" class="mic" title="Answer by voice">🎤</button>
-        <input id="praxText" type="text" placeholder="…or type your answer" autocomplete="off">
+        <input id="praxText" type="text" placeholder="…or type your answer" autocomplete="off" maxlength="40">
         <button id="praxSend">Send</button>
       </div>
     </div>
@@ -346,10 +348,29 @@
 </div>
 
   <footer>
-    <p>Runs entirely in your browser — free &amp; offline after first load.</p>
-    <p>Dictionary: <a href="https://cc-cedict.org/">CC-CEDICT</a> (CC BY-SA 4.0) · Sentences: <a href="https://tatoeba.org/">Tatoeba</a> (CC BY 2.0 FR) · Recognition: <a href="https://github.com/gugray/HanziLookupJS">HanziLookupJS</a> (LGPL)</p>
+    <p>Runs entirely in your browser — free &amp; offline after first load. Your progress is saved only on this device.</p>
     <p>Tip: in Safari tap <strong>Share → Add to Home Screen</strong> to install as an app.</p>
-    <p id="appVersion">version 26</p>
+    <p><button id="aboutToggle" class="ghost small">ℹ️ About, privacy &amp; licenses</button></p>
+    <p id="appVersion">version 27</p>
+
+    <section id="aboutPanel" class="about-panel" hidden>
+      <h3>About</h3>
+      <p>写字 Xiězì is a free, offline-first Chinese learning app that runs entirely in your browser. There is no account, no server and no tracking — nothing you write, say or study leaves your device, and your progress is stored locally (in this browser only).</p>
+
+      <h3>Privacy — microphone &amp; speech</h3>
+      <p>Speaking practice and voice input use your browser's built-in speech recognition. On <b>iPhone/Safari</b> this runs on-device. On <b>Chrome/Android</b> the browser may send the recorded audio to the browser maker's servers (e.g. Google) to transcribe it — this is handled by the browser, not by this app. The microphone is used only while you hold a speaking exercise, and nothing is recorded or stored by the app.</p>
+
+      <h3>Data sources &amp; licenses</h3>
+      <ul class="about-lic">
+        <li><b>CC-CEDICT</b> dictionary — <a href="https://cc-cedict.org/" rel="noopener noreferrer">cc-cedict.org</a>, licensed <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener noreferrer">CC BY-SA 4.0</a>.</li>
+        <li><b>Tatoeba</b> example sentences — <a href="https://tatoeba.org/" rel="noopener noreferrer">tatoeba.org</a>, licensed <a href="https://creativecommons.org/licenses/by/2.0/fr/" rel="noopener noreferrer">CC BY 2.0 FR</a>.</li>
+        <li><b>Make Me a Hanzi</b> stroke &amp; etymology data — <a href="https://github.com/skishore/makemeahanzi" rel="noopener noreferrer">github.com/skishore/makemeahanzi</a>, licensed LGPL and the Arphic Public License.</li>
+        <li><b>HanziLookupJS</b> handwriting recognition — <a href="https://github.com/gugray/HanziLookupJS" rel="noopener noreferrer">github.com/gugray/HanziLookupJS</a>, licensed LGPL 3.</li>
+        <li><b>HSK</b> word lists and the <b>Jun Da</b> character-frequency list, used for leveling.</li>
+      </ul>
+      <p>These works are used under the licenses above; their trademarks and content belong to their respective authors. This app's own code is licensed MIT, and the everyday dialogues and conversation content are original to this project. Because some components are LGPL, you are free to obtain, modify and relink them — see the project source.</p>
+      <p><a href="https://github.com/furtczak/ping-pong" rel="noopener noreferrer">Source code &amp; full license texts on GitHub</a></p>
+    </section>
   </footer>
 </main>
 

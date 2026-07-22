@@ -437,6 +437,15 @@ button.mic.listening { animation: micpulse 1s infinite; }
 .rule-plus, .rule-arrow { color: var(--muted); font-weight: 700; }
 
 footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--muted); }
+.about-panel {
+  text-align: left; max-width: 100%; margin: 12px auto 0; padding: 14px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px; color: var(--ink);
+}
+.about-panel h3 { margin: 12px 0 4px; }
+.about-panel h3:first-child { margin-top: 0; }
+.about-panel p { font-size: 13px; line-height: 1.55; }
+.about-lic { font-size: 13px; line-height: 1.6; padding-left: 18px; margin: 4px 0; }
+.about-panel a { color: var(--accent); }
 footer a { color: inherit; }
 
 .loadbar {
