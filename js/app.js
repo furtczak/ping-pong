@@ -58,8 +58,8 @@
   }
 
   function esc(s) {
-    return s.replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
 
@@ -472,7 +472,7 @@
   $('backspace').addEventListener('click', function () { setWord(word.slice(0, -1)); });
   $('clearWord').addEventListener('click', function () { setWord(''); });
   $('typeInput').addEventListener('input', function () {
-    setWord(this.value.trim());
+    setWord(this.value.trim().slice(0, 20));
   });
   $('speakWord').addEventListener('click', function () { speak(word); });
 
@@ -855,6 +855,13 @@
     if (tab === 'rules' && dict) renderRules();
     if (tab === 'review') renderReview();
   }
+
+  // about / licenses panel
+  $('aboutToggle').addEventListener('click', function () {
+    var p = $('aboutPanel');
+    p.hidden = !p.hidden;
+    if (!p.hidden) p.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
 
   // ---------------------------------------------------------------- learn: shared helpers
   function shuffle(a) {
@@ -3099,7 +3106,7 @@
 
   function runSearch(qRaw) {
     var box = $('searchResults');
-    var q = qRaw.trim().toLowerCase();
+    var q = qRaw.trim().toLowerCase().slice(0, 40);
     if (!q) { box.hidden = true; box.innerHTML = ''; return; }
     if (!buildSearchIndex()) { box.hidden = false; box.innerHTML = '<p class="muted">Loading dictionary…</p>'; return; }
     var han = /[㐀-鿿]/.test(q);
