@@ -875,6 +875,7 @@
     if (tab === 'words') renderWords(false);
     if (tab === 'rules' && dict) renderRules();
     if (tab === 'review') renderReview();
+    if (tab === 'listen' && !$('listenList').children.length) renderListenList();
   }
 
   // about / licenses panel
@@ -3478,6 +3479,233 @@
     $('reviewDone').hidden = true; $('reviewHome').hidden = false;
     renderReview();
   });
+
+  // ---------------------------------------------------------------- Listen: podcasts & drama
+  // Scripted "audio plays" read aloud by TTS. Speakers get slightly different
+  // pitch so a scene sounds like more than one person. Fictional characters.
+  var SHOWS = [
+    { type: 'podcast', e: '☕', t: '早安小语 · Good Morning Xiǎoyǔ', d: 'Daily chit-chat: hot weather, coffee and bubble tea.', date: '2026年7月27日', level: 'HSK 1–2', lines: [
+      ['小语', '大家早上好！欢迎收听《早安小语》。', 'Good morning everyone! Welcome to Good Morning Xiaoyu.'],
+      ['小语', '今天是七月二十七号，天气很热。', 'Today is July 27th, and it is very hot.'],
+      ['小语', '我今天早上喝了一杯冰咖啡。', 'This morning I had a cup of iced coffee.'],
+      ['阿明', '你好小语！我也很喜欢喝咖啡。', 'Hi Xiaoyu! I love coffee too.'],
+      ['阿明', '不过夏天我更喜欢喝奶茶。', 'But in summer I prefer bubble tea.'],
+      ['小语', '哈哈，奶茶现在真的很流行。', 'Haha, bubble tea is really popular now.'],
+      ['阿明', '是啊，我家楼下就有三家奶茶店。', 'Yeah, there are three bubble tea shops right downstairs.'],
+      ['小语', '太多了！那你最喜欢什么味道？', 'So many! So what flavour do you like best?'],
+      ['阿明', '我最喜欢草莓味的。', 'I like the strawberry one the most.'],
+      ['小语', '听起来很好喝。', 'That sounds delicious.'],
+      ['小语', '好，今天的节目就到这里，明天见！', 'OK, that is all for today — see you tomorrow!']] },
+    { type: 'podcast', e: '📱', t: '科技一分钟 · Tech Minute', d: 'New phones, long batteries, and learning Chinese on your screen.', date: '2026年7月25日', level: 'HSK 2–3', lines: [
+      ['主持人', '欢迎收听《科技一分钟》，我是主持人。', "Welcome to Tech Minute, I'm your host."],
+      ['主持人', '最近很多人都换了新手机。', 'Lots of people have got new phones recently.'],
+      ['主持人', '这些手机的电池用得更久了。', "These phones' batteries last longer now."],
+      ['嘉宾', '对，我上个星期也换了一个。', 'Right, I got a new one last week too.'],
+      ['嘉宾', '现在拍照片特别清楚。', 'The photos are especially clear now.'],
+      ['主持人', '你平时用手机做什么最多？', 'What do you use your phone for the most?'],
+      ['嘉宾', '我用它看视频，还有学中文！', 'I use it to watch videos — and to learn Chinese!'],
+      ['主持人', '哈哈，学中文最重要。', 'Haha, learning Chinese is the most important.'],
+      ['嘉宾', '每天学一点儿，进步很快。', 'Study a little every day and you improve fast.'],
+      ['主持人', '说得好，我们下次再见。', 'Well said — see you next time.']] },
+    { type: 'podcast', e: '🍜', t: '美食小站 · Food Stop', d: 'Hot pot in summer, bubble tea, and how spicy is too spicy.', date: '2026年7月20日', level: 'HSK 1–2', lines: [
+      ['主持人', '欢迎收听《美食小站》。', 'Welcome to Food Stop.'],
+      ['主持人', '你们喜欢吃火锅吗？', 'Do you like eating hot pot?'],
+      ['嘉宾', '我超级喜欢！冬天吃最好。', 'I love it! Best eaten in winter.'],
+      ['主持人', '可是现在是夏天啊。', 'But it is summer now.'],
+      ['嘉宾', '夏天吃火锅，然后开空调，很爽！', 'Hot pot in summer with the AC on — awesome!'],
+      ['主持人', '哈哈，你太会享受了。', 'Haha, you really know how to enjoy life.'],
+      ['嘉宾', '对了，你吃辣吗？', 'By the way, can you eat spicy food?'],
+      ['主持人', '一点点。太辣我就受不了。', "A little. If it's too spicy I can't take it."],
+      ['嘉宾', '那你要慢慢练习。', 'Then you need to build it up slowly.'],
+      ['主持人', '好的，下次一起去吃！', "OK — let's go eat together next time!"]] },
+    { type: 'drama', e: '💔', t: '盲选恋爱 · Blind Love', d: "Trashy dating show: they can't see each other, only hear the voice.", date: '2026年7月26日', level: 'HSK 1–2', lines: [
+      ['主持', '欢迎来到《盲选恋爱》！', 'Welcome to Blind Love!'],
+      ['主持', '在这里，你看不到对方，只能听声音。', "Here, you can't see the other person — you can only hear their voice."],
+      ['大伟', '你好，我叫大伟，今年二十八岁。', "Hi, I'm Dawei, I'm 28 this year."],
+      ['小美', '你好大伟，我叫小美。', "Hi Dawei, I'm Xiaomei."],
+      ['大伟', '小美，你喜欢做什么？', 'Xiaomei, what do you like to do?'],
+      ['小美', '我喜欢做饭，也喜欢旅游。', 'I like cooking, and I like travelling.'],
+      ['大伟', '太好了！我很喜欢吃…啊，我是说旅游。', 'Great! I really like eating… uh, I mean travelling.'],
+      ['小美', '哈哈，你很有意思。', "Haha, you're funny."],
+      ['主持', '哦！他们好像有感觉了！', 'Oh! They seem to have a spark!'],
+      ['大伟', '小美，你愿意跟我见面吗？', 'Xiaomei, would you be willing to meet me?'],
+      ['小美', '好啊，我愿意！', "Sure — I'd love to!"],
+      ['主持', '太浪漫了！我们明天见！', 'So romantic! See you tomorrow!']] },
+    { type: 'drama', e: '🏝️', t: '浪漫小岛 · Romance Island', d: 'Sun, sea and sweet-talkers on a reality dating island.', date: '2026年7月24日', level: 'HSK 2', lines: [
+      ['主持', '欢迎来到《浪漫小岛》，这里有阳光、大海和爱情。', 'Welcome to Romance Island — sunshine, the sea, and love.'],
+      ['女', '今天天气真好，我们去海边走走吧。', "The weather's lovely today — let's take a walk by the sea."],
+      ['男', '好啊，牵着你的手，我很开心。', "Sure — holding your hand makes me happy."],
+      ['女', '你说话真甜，是不是对每个人都这样？', "You're such a sweet talker — are you like this with everyone?"],
+      ['男', '当然不是，只对你一个人。', 'Of course not — only with you.'],
+      ['女', '哼，我不太相信。', "Hmph, I don't really believe you."],
+      ['男', '那我用行动证明给你看。', "Then I'll prove it to you with actions."],
+      ['主持', '哇，气氛越来越好了！', 'Wow, the mood keeps heating up!'],
+      ['女', '好吧，我再给你一次机会。', "Fine — I'll give you one more chance."],
+      ['男', '谢谢你，我不会让你失望的。', "Thank you — I won't let you down."]] },
+    { type: 'drama', e: '👩‍🍳', t: '厨房大比拼 · Kitchen Battle', d: 'A cooking-contest show — ten minutes, one dish, salty eggs.', date: '2026年7月22日', level: 'HSK 2', lines: [
+      ['主持', '欢迎来到《厨房大比拼》！', 'Welcome to Kitchen Battle!'],
+      ['主持', '今天的题目是：做一道简单的中国菜。', 'Today’s task: cook one simple Chinese dish.'],
+      ['选手一', '我要做西红柿炒鸡蛋。', "I'll make tomato and scrambled egg."],
+      ['选手二', '我做我最拿手的炒米饭。', "I'll make my signature fried rice."],
+      ['主持', '时间只有十分钟，开始！', 'You only have ten minutes — go!'],
+      ['选手一', '糟糕，我的鸡蛋太咸了！', 'Oh no, my eggs are too salty!'],
+      ['选手二', '哈哈，我的米饭闻起来很香。', 'Haha, my rice smells great.'],
+      ['主持', '时间到！请评委尝一尝。', 'Time is up! Judges, please have a taste.'],
+      ['评委', '嗯…这个米饭真好吃！', 'Mmm… this fried rice is really tasty!'],
+      ['主持', '今天的冠军是选手二！', "Today's champion is contestant two!"],
+      ['选手二', '太好了，谢谢大家！', 'Yes! Thank you everyone!']] }
+  ];
+
+  var lis = { ep: null, idx: 0, playing: false, seq: 0, pitch: {} };
+
+  function speakLine(text, pitch, onEnd) {
+    var called = false;
+    function fire() { if (!called) { called = true; onEnd && onEnd(); } }
+    var fallback = Math.min(9000, Math.max(1600, 300 * text.length));
+    var timer = setTimeout(fire, fallback);
+    if (!window.speechSynthesis) { return; }
+    var u = new SpeechSynthesisUtterance(text);
+    applyVoice(u);
+    if (pitch) u.pitch = pitch;
+    u.onend = function () { clearTimeout(timer); fire(); };
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+
+  (function () {
+    var box = $('listenFilter');
+    [['all', 'All'], ['podcast', '🎙️ Podcasts'], ['drama', '📺 Drama']].forEach(function (o, i) {
+      var b = document.createElement('button');
+      b.textContent = o[1];
+      b.setAttribute('data-v', o[0]);
+      if (i === 0) b.classList.add('sel');
+      box.appendChild(b);
+    });
+    selectable(box);
+    box.addEventListener('click', function (ev) { if (ev.target.closest('button')) renderListenList(); });
+  })();
+
+  function renderListenList() {
+    var selBtn = $('listenFilter').querySelector('button.sel');
+    var filter = selBtn ? selBtn.getAttribute('data-v') : 'all';
+    var box = $('listenList');
+    box.innerHTML = '';
+    SHOWS.forEach(function (ep, i) {
+      if (filter !== 'all' && ep.type !== filter) return;
+      var b = document.createElement('button');
+      b.className = 'dlg-item';
+      b.innerHTML = '<span class="em">' + ep.e + '</span><span><b>' + esc(ep.t) + '</b>' +
+        '<small>' + (ep.type === 'podcast' ? '🎙️ Podcast' : '📺 Drama') + ' · ' + esc(ep.level) + ' · ' + esc(ep.date) + '</small>' +
+        '<small>' + esc(ep.d) + '</small></span>';
+      b.addEventListener('click', function () { openEpisode(i); });
+      box.appendChild(b);
+    });
+  }
+
+  function openEpisode(i) {
+    lis.ep = SHOWS[i];
+    lis.idx = 0; lis.playing = false; lis.seq++;
+    // assign a pitch per distinct speaker
+    lis.pitch = {};
+    var pitches = [1.0, 0.8, 1.18, 0.9, 1.3];
+    var k = 0;
+    lis.ep.lines.forEach(function (ln) {
+      if (!(ln[0] in lis.pitch)) { lis.pitch[ln[0]] = pitches[k % pitches.length]; k++; }
+    });
+    $('listenHome').hidden = true;
+    $('listenPlayer').hidden = false;
+    $('listenTitle').textContent = lis.ep.e + ' ' + lis.ep.t;
+    $('listenMeta').textContent = lis.ep.level + ' · ' + lis.ep.date;
+    renderListenLines();
+    applyLisToggles();
+    setCurrentLine(0, false);
+    setPlayBtn(false);
+  }
+
+  function renderListenLines() {
+    var box = $('listenLines');
+    box.innerHTML = '';
+    lis.ep.lines.forEach(function (ln, i) {
+      var div = document.createElement('div');
+      div.className = 'bubble listen-line';
+      div.setAttribute('data-i', i);
+      div.innerHTML = '<span class="who">' + esc(ln[0]) + '</span>' +
+        '<button class="speak" data-say="' + esc(ln[1]) + '">🔊</button>' +
+        '<div class="zh">' + rubyHtml(ln[1], null) + '</div>' +
+        '<div class="dlg-split">' + hintChipsHtml(ln[1], true) + '</div>' +
+        '<div class="dlg-en">' + esc(ln[2]) + '</div>';
+      div.addEventListener('click', function (ev) {
+        if (ev.target.closest('.hint-chip') || ev.target.closest('.speak')) return;
+        lis.idx = i;
+        if (lis.playing) playFrom(i); else { setCurrentLine(i, true); speakLine(ln[1], lis.pitch[ln[0]]); }
+      });
+      box.appendChild(div);
+      bindSpeakButtons(div);
+    });
+  }
+
+  function setCurrentLine(i, scroll) {
+    lis.idx = i;
+    var lines = $('listenLines').children;
+    for (var j = 0; j < lines.length; j++) lines[j].classList.toggle('cur', j === i);
+    if (scroll && lines[i]) lines[i].scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  function setPlayBtn(playing) {
+    lis.playing = playing;
+    $('lisPlay').innerHTML = playing ? '⏸ Pause' : '▶︎ Play';
+  }
+
+  function playFrom(i) {
+    var seq = ++lis.seq;
+    setPlayBtn(true);
+    (function step(k) {
+      if (seq !== lis.seq || !lis.playing) return;
+      if (k >= lis.ep.lines.length) { setPlayBtn(false); return; }
+      lis.idx = k;
+      setCurrentLine(k, true);
+      var ln = lis.ep.lines[k];
+      speakLine(ln[1], lis.pitch[ln[0]], function () {
+        if (seq === lis.seq && lis.playing) setTimeout(function () { step(k + 1); }, 450);
+      });
+    })(i);
+  }
+
+  function stopPlaying() {
+    lis.seq++;
+    setPlayBtn(false);
+    if (window.speechSynthesis) speechSynthesis.cancel();
+  }
+
+  $('lisPlay').addEventListener('click', function () {
+    if (lis.playing) stopPlaying();
+    else playFrom(lis.idx);
+  });
+  $('lisReplay').addEventListener('click', function () {
+    var ln = lis.ep.lines[lis.idx];
+    if (lis.playing) playFrom(lis.idx); else speakLine(ln[1], lis.pitch[ln[0]]);
+  });
+  $('lisNext').addEventListener('click', function () {
+    var n = Math.min(lis.ep.lines.length - 1, lis.idx + 1);
+    if (lis.playing) playFrom(n); else { setCurrentLine(n, true); var ln = lis.ep.lines[n]; speakLine(ln[1], lis.pitch[ln[0]]); }
+  });
+  $('lisPrev').addEventListener('click', function () {
+    var n = Math.max(0, lis.idx - 1);
+    if (lis.playing) playFrom(n); else { setCurrentLine(n, true); var ln = lis.ep.lines[n]; speakLine(ln[1], lis.pitch[ln[0]]); }
+  });
+  $('listenBack').addEventListener('click', function () {
+    stopPlaying();
+    $('listenPlayer').hidden = true;
+    $('listenHome').hidden = false;
+  });
+
+  function applyLisToggles() {
+    var lines = $('listenLines');
+    lines.classList.toggle('nopy', !$('lisPinyin').checked);
+    lines.classList.toggle('split', $('lisSplit').checked);
+    lines.classList.toggle('noen', !$('lisEn').checked);
+  }
+  ['lisPinyin', 'lisSplit', 'lisEn'].forEach(function (id) { $(id).addEventListener('change', applyLisToggles); });
 
   // ---------------------------------------------------------------- PWA
   if ('serviceWorker' in navigator) {
