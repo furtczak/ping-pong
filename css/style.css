@@ -416,6 +416,20 @@ button.mic.listening { animation: micpulse 1s infinite; }
 .prax-input input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 #praxSend { font-weight: 600; }
 
+/* Listen — podcasts & drama */
+.dlg-item small { display: block; }
+.listen-lines .bubble { max-width: 100%; cursor: pointer; }
+.listen-line.cur { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.listen-line.cur .zh { font-weight: 600; }
+.listen-bar {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; gap: 8px; align-items: center; justify-content: center;
+  margin-top: 12px; padding: 10px; background: var(--card);
+  border: 1px solid var(--line); border-radius: 14px;
+}
+.listen-bar button { font-size: 18px; padding: 10px 14px; }
+.listen-bar #lisPlay { flex: 1; font-weight: 600; }
+
 /* Word list */
 .words-list { display: grid; gap: 8px; }
 .word-row { display: flex; gap: 8px; align-items: stretch; }
