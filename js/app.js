@@ -3556,17 +3556,20 @@
       ['选手二', '太好了，谢谢大家！', 'Yes! Thank you everyone!']] }
   ];
 
-  var lis = { ep: null, idx: 0, playing: false, seq: 0, pitch: {} };
+  var lis = { ep: null, idx: 0, playing: false, seq: 0, cfg: {} };
 
-  function speakLine(text, pitch, onEnd) {
+  function speakLine(text, cfg, onEnd) {
     var called = false;
     function fire() { if (!called) { called = true; onEnd && onEnd(); } }
     var fallback = Math.min(9000, Math.max(1600, 300 * text.length));
     var timer = setTimeout(fire, fallback);
     if (!window.speechSynthesis) { fire(); return; }
     var u = new SpeechSynthesisUtterance(text);
-    applyVoice(u);
-    if (pitch) u.pitch = pitch;
+    applyVoice(u); // global voice + user rate as the baseline
+    if (cfg) {
+      if (cfg.voice) { u.voice = cfg.voice; u.lang = cfg.voice.lang; } // a different narrator per character
+      if (cfg.pitch) u.pitch = cfg.pitch;                              // different tone of voice
+    }
     u.onend = function () { clearTimeout(timer); fire(); };
     u.onerror = function () { clearTimeout(timer); fire(); };
     try { speechSynthesis.cancel(); } catch (e) {}
@@ -3608,12 +3611,20 @@
   function openEpisode(i) {
     lis.ep = SHOWS[i];
     lis.idx = 0; lis.playing = false; lis.seq++;
-    // assign a pitch per distinct speaker
-    lis.pitch = {};
-    var pitches = [1.0, 0.8, 1.18, 0.9, 1.3];
+    // give each distinct speaker their own narrator: a different installed
+    // Chinese voice where available, plus a different pitch/tone
+    lis.cfg = {};
+    var voices = chineseVoices();
+    var pitches = [1.0, 0.78, 1.2, 0.88, 1.32, 0.7, 1.1];
     var k = 0;
     lis.ep.lines.forEach(function (ln) {
-      if (!(ln[0] in lis.pitch)) { lis.pitch[ln[0]] = pitches[k % pitches.length]; k++; }
+      if (!(ln[0] in lis.cfg)) {
+        lis.cfg[ln[0]] = {
+          voice: voices.length ? voices[k % voices.length] : null,
+          pitch: pitches[k % pitches.length]
+        };
+        k++;
+      }
     });
     $('listenHome').hidden = true;
     $('listenPlayer').hidden = false;
@@ -3647,7 +3658,7 @@
       div.addEventListener('click', function (ev) {
         if (ev.target.closest('.hint-chip') || ev.target.closest('.speak')) return;
         lis.idx = i;
-        if (lis.playing) playFrom(i); else { setCurrentLine(i, true); speakLine(ln[1], lis.pitch[ln[0]]); }
+        if (lis.playing) playFrom(i); else { setCurrentLine(i, true); speakLine(ln[1], lis.cfg[ln[0]]); }
       });
       box.appendChild(div);
       bindSpeakButtons(div);
@@ -3675,7 +3686,7 @@
       lis.idx = k;
       setCurrentLine(k, true);
       var ln = lis.ep.lines[k];
-      speakLine(ln[1], lis.pitch[ln[0]], function () {
+      speakLine(ln[1], lis.cfg[ln[0]], function () {
         if (seq === lis.seq && lis.playing) setTimeout(function () { step(k + 1); }, 450);
       });
     })(i);
@@ -3693,15 +3704,15 @@
   });
   $('lisReplay').addEventListener('click', function () {
     var ln = lis.ep.lines[lis.idx];
-    if (lis.playing) playFrom(lis.idx); else speakLine(ln[1], lis.pitch[ln[0]]);
+    if (lis.playing) playFrom(lis.idx); else speakLine(ln[1], lis.cfg[ln[0]]);
   });
   $('lisNext').addEventListener('click', function () {
     var n = Math.min(lis.ep.lines.length - 1, lis.idx + 1);
-    if (lis.playing) playFrom(n); else { setCurrentLine(n, true); var ln = lis.ep.lines[n]; speakLine(ln[1], lis.pitch[ln[0]]); }
+    if (lis.playing) playFrom(n); else { setCurrentLine(n, true); var ln = lis.ep.lines[n]; speakLine(ln[1], lis.cfg[ln[0]]); }
   });
   $('lisPrev').addEventListener('click', function () {
     var n = Math.max(0, lis.idx - 1);
-    if (lis.playing) playFrom(n); else { setCurrentLine(n, true); var ln = lis.ep.lines[n]; speakLine(ln[1], lis.pitch[ln[0]]); }
+    if (lis.playing) playFrom(n); else { setCurrentLine(n, true); var ln = lis.ep.lines[n]; speakLine(ln[1], lis.cfg[ln[0]]); }
   });
   $('listenBack').addEventListener('click', function () {
     stopPlaying();
