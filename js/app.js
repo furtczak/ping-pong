@@ -3563,13 +3563,16 @@
     function fire() { if (!called) { called = true; onEnd && onEnd(); } }
     var fallback = Math.min(9000, Math.max(1600, 300 * text.length));
     var timer = setTimeout(fire, fallback);
-    if (!window.speechSynthesis) { return; }
+    if (!window.speechSynthesis) { fire(); return; }
     var u = new SpeechSynthesisUtterance(text);
     applyVoice(u);
     if (pitch) u.pitch = pitch;
     u.onend = function () { clearTimeout(timer); fire(); };
-    speechSynthesis.cancel();
+    u.onerror = function () { clearTimeout(timer); fire(); };
+    try { speechSynthesis.cancel(); } catch (e) {}
     speechSynthesis.speak(u);
+    // iOS sometimes leaves the queue paused
+    try { speechSynthesis.resume(); } catch (e) {}
   }
 
   (function () {
@@ -3619,7 +3622,14 @@
     renderListenLines();
     applyLisToggles();
     setCurrentLine(0, false);
-    setPlayBtn(false);
+    if (!window.speechSynthesis) {
+      setPlayBtn(false);
+      $('listenMeta').textContent = lis.ep.level + ' · no voice on this device';
+      return;
+    }
+    // start playing right away — this runs inside the tap that opened the
+    // episode, which iOS requires for speech to actually play
+    playFrom(0);
   }
 
   function renderListenLines() {
