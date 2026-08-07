@@ -875,7 +875,7 @@
     if (tab === 'words') renderWords(false);
     if (tab === 'rules' && dict) renderRules();
     if (tab === 'review') renderReview();
-    if (tab === 'method') { renderMethods(); renderMnemList(); }
+    if (tab === 'method') { renderMethods(); renderMnemList(); renderStarterList(); }
     if (tab === 'listen' && !$('listenList').children.length) renderListenList();
   }
 
@@ -3758,10 +3758,72 @@
   var mnem = (function () { try { return JSON.parse(localStorage.getItem('xiezi.mnem')) || {}; } catch (e) { return {}; } })();
   function saveMnem() { try { localStorage.setItem('xiezi.mnem', JSON.stringify(mnem)); } catch (e) {} }
 
+  // ready-made starter hooks for common HSK1 characters — examples to learn the technique from
+  var STARTER = {
+    '一': 'One flat stroke — a single chopstick lying on the table.',
+    '二': 'Two chopsticks stacked neatly — two.',
+    '三': 'Three stacked lines — a little tower of three pancakes.',
+    '十': 'A plus sign standing tall — ten fingers crossing to count a full set.',
+    '人': 'Two legs caught mid-stride — a person walking.',
+    '大': 'A person 人 flinging both arms wide: "it was THIS big!"',
+    '小': 'A tiny core with two flecks breaking off — so small it is almost nothing.',
+    '中': 'A spear driven clean through the middle of a box — dead centre.',
+    '口': 'A wide open square — a mouth.',
+    '日': 'A little window box with the sun\'s beam inside — day, the sun.',
+    '月': 'A slim crescent moon (also the "flesh" of the body).',
+    '明': 'Sun 日 and moon 月 side by side lighting the sky — bright.',
+    '女': 'A woman sitting gracefully, arms folded across her lap.',
+    '子': 'A swaddled baby with both arms reaching up — a child.',
+    '好': 'A woman 女 hugging her child 子 — everything is good.',
+    '妈': 'A woman 女 galloping in like a horse 马 the instant her kid cries — Mum!',
+    '马': 'A flowing mane and four kicking legs — a horse.',
+    '爸': 'The father 父 you cling 巴 to — Dad.',
+    '你': 'A person 亻 standing across from you, pointing: "you".',
+    '我': 'A hand gripping a spear to guard myself — me.',
+    '他': 'A person 亻 way over there — him.',
+    '们': 'People 亻 crowding through a gate 门 — a whole group ("they / we").',
+    '是': 'Under the sun 日, what is straight and correct — yes, it IS so.',
+    '不': 'A bird flies up and smacks the ceiling — nope, can\'t, no.',
+    '有': 'A hand 又 laid over a slab of meat 月 — I have it.',
+    '在': 'Planted firmly on the earth 土 — you are right here, present.',
+    '水': 'A stream with splashes flying off both banks — water.',
+    '火': 'A figure with sparks shooting off each side — on fire.',
+    '山': 'Three jagged peaks rising up — a mountain.',
+    '木': 'A trunk with branches reaching up and roots below — a tree.',
+    '林': 'Two trees 木 standing together — a little wood.',
+    '本': 'A tree 木 with a mark slashed at its base — the root, the origin, a book.',
+    '上': 'A mark sitting above the line — up.',
+    '下': 'A mark hanging below the line — down.',
+    '天': 'A big person 大 with the sky drawn as one line above their head.',
+    '家': 'A pig 豕 tucked under a roof 宀 — old farmhouses kept pigs inside: home.',
+    '学': 'A child 子 under a roof, knowledge sprinkling down onto its head — study.',
+    '生': 'A green sprout bursting up through the soil — life, to be born.',
+    '爱': 'Cupped hands 爫 sheltering a friend 友 under a warm roof — love.',
+    '国': 'A precious jade 玉 sealed inside four walls 囗 — a country.',
+    '来': 'Heavy heads of ripe grain leaning over, calling you to come and reap.',
+    '去': 'Step off your patch of earth 土 and head out the door — go.',
+    '吃': 'A mouth 口 begging 乞 for a bite — eat.',
+    '喝': 'A wide mouth 口 gulping something down in one go — drink.',
+    '说': 'Words 讠 slipping out through parted lips — to speak.',
+    '想': 'Your eye 目 fixed on a tree 木 while your heart 心 aches below — to think of, to miss.',
+    '的': 'A white 白 ladle 勺 scooping out the one that belongs — the little "of".',
+    '名': 'At dusk 夕 it is too dark to see, so you shout your name 口 out loud.',
+    '白': 'A single sunbeam 日 with a ray on top — pure white.',
+    '点': 'Tiny fire-sparks 灬 flicking up — a little dot, an o\'clock point.',
+    '儿': 'Two wobbly legs of a toddler — child, son.',
+    '谢': 'Words 讠 fired 射 straight from the heart — thank you.',
+    '会': 'People gathered together under one roof — a meeting, and knowing how.',
+    '这': 'Walk 辶 right up to THIS one standing in front of you.'
+  };
+
   function mnemHookHtml(ch) {
     var h = mnem[ch];
-    return '<div class="mnem-hook">' + (h ? '<b>💡 Your memory hook:</b> ' + esc(h) + ' ' : '') +
-      '<button class="mnem-open ghost small" data-ch="' + esc(ch) + '">' + (h ? '✎ edit hook' : '💡 add a memory hook') + '</button></div>';
+    if (h) return '<div class="mnem-hook"><b>💡 Your memory hook:</b> ' + esc(h) +
+      ' <button class="mnem-open ghost small" data-ch="' + esc(ch) + '">✎ edit hook</button></div>';
+    var s = STARTER[ch];
+    if (s) return '<div class="mnem-hook mnem-hook-starter"><b>💡 Memory hook:</b> ' + esc(s) +
+      ' <button class="mnem-open ghost small" data-ch="' + esc(ch) + '">✎ make it mine</button></div>';
+    return '<div class="mnem-hook"><button class="mnem-open ghost small" data-ch="' + esc(ch) + '">💡 add a memory hook</button></div>';
   }
 
   function openMnem(ch) {
@@ -3799,7 +3861,8 @@
       '<button class="speak" data-say="' + esc(ch) + '">🔊</button></div>' +
       partsHtml +
       '<p class="mnem-seed">' + esc(seed) + '</p>' +
-      '<textarea id="mnemText" rows="3" maxlength="240" placeholder="e.g. A woman 女 riding a horse 马 — that\'s my mum!">' + esc(mnem[ch] || '') + '</textarea>' +
+      (!mnem[ch] && STARTER[ch] ? '<p class="mnem-starter-note">📚 A starter story is filled in below — tweak a word or two so it becomes <b>yours</b>, then save.</p>' : '') +
+      '<textarea id="mnemText" rows="3" maxlength="240" placeholder="e.g. A woman 女 riding a horse 马 — that\'s my mum!">' + esc(mnem[ch] || STARTER[ch] || '') + '</textarea>' +
       '<div class="mnem-btns"><button id="mnemSave" class="primary">Save hook</button>' +
       (mnem[ch] ? '<button id="mnemDel" class="ghost">Delete</button>' : '') +
       '<button id="mnemDict" class="ghost">Open in dictionary</button></div>';
@@ -3832,6 +3895,26 @@
       box.appendChild(b);
     });
   }
+
+  function renderStarterList() {
+    var box = $('starterList');
+    if (!box || box.children.length) return;
+    Object.keys(STARTER).forEach(function (ch) {
+      var b = document.createElement('button');
+      b.className = 'mnem-item starter-item';
+      var t = STARTER[ch]; if (t.length > 58) t = t.slice(0, 58) + '…';
+      b.innerHTML = '<span class="mnem-item-hz">' + esc(ch) + '</span><span class="mnem-item-t">' + esc(t) + '</span>';
+      b.addEventListener('click', function () { openMnem(ch); });
+      box.appendChild(b);
+    });
+  }
+  if ($('starterAddAll')) $('starterAddAll').addEventListener('click', function () {
+    var added = 0;
+    Object.keys(STARTER).forEach(function (ch) { if (!mnem[ch]) { mnem[ch] = STARTER[ch]; added++; } });
+    saveMnem(); renderMnemList(); refresh();
+    this.textContent = added ? '✓ Added ' + added + ' hooks' : '✓ Already saved';
+    this.disabled = true;
+  });
 
   $('mnemInput').addEventListener('input', function () { renderMnemWork(this.value); });
   document.querySelector('main').addEventListener('click', function (ev) {

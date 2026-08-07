@@ -366,6 +366,10 @@ button.primary { background: var(--ink); color: var(--card); border-color: var(-
 .mnem-item-t { font-size: 13px; color: var(--muted); }
 .mnem-hook { margin-top: 8px; font-size: 13px; }
 .mnem-hook b { color: var(--accent); }
+.mnem-hook-starter { opacity: 0.9; }
+.mnem-starter-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.starter-actions { margin: 6px 0 12px; }
+.starter-item { width: 100%; }
 
 /* Progress & review */
 .rev-stats { display: flex; gap: 8px; margin-bottom: 14px; }
