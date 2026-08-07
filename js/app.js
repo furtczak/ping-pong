@@ -556,7 +556,7 @@
       hskBadge(hsk) +
       '<button class="speak" data-say="' + esc(simp) + '" title="Speak">🔊</button>' +
       '</div><p class="def">' + esc(defs) + '</p>' +
-      (simp.length === 1 ? howtoHtml(simp) + originHtml(simp) : '') +
+      (simp.length === 1 ? howtoHtml(simp) + originHtml(simp) + mnemHookHtml(simp) : '') +
       '</div>';
   }
 
@@ -875,6 +875,7 @@
     if (tab === 'words') renderWords(false);
     if (tab === 'rules' && dict) renderRules();
     if (tab === 'review') renderReview();
+    if (tab === 'method') { renderMethods(); renderMnemList(); }
     if (tab === 'listen' && !$('listenList').children.length) renderListenList();
   }
 
@@ -3727,6 +3728,116 @@
     lines.classList.toggle('noen', !$('lisEn').checked);
   }
   ['lisPinyin', 'lisSplit', 'lisEn'].forEach(function (id) { $(id).addEventListener('change', applyLisToggles); });
+
+  // ---------------------------------------------------------------- Method: how to learn + memory hooks
+  var METHODS = [
+    { e: '🔁', t: 'Test yourself (active recall)', d: 'Trying to remember — before you check — burns it in far deeper than re-reading. People who self-test remember about 50% more a week later. Feeling like you "know" something after reading is a trap.',
+      app: 'Quiz, Flashcards, Tones and Sentence writing all make you retrieve, not re-read.' },
+    { e: '📈', t: 'Space it out (spaced repetition)', d: 'Review right before you\'d forget — at growing gaps (1 day, 3, 7, 16…). Cramming feels productive but fades fast; spacing the same minutes over days sticks for months.',
+      app: 'The Review tab schedules every word you meet and shows what\'s due today.' },
+    { e: '🔀', t: 'Mix it up (interleaving)', d: 'Don\'t drill one thing to death. Shuffling different words and skills forces your brain to tell them apart and recall from scratch — harder in the moment, stronger in the long run.',
+      app: 'Jump between tabs, and let Quiz/Review mix words instead of studying one list.' },
+    { e: '💡', t: 'Make it a story (mnemonics)', d: 'Don\'t memorize strokes — break a character into its pieces and tie them into one vivid, silly image. 妈 = 女 (woman) + 马 (horse): a mum charging like a horse to her child. The weirder the picture, the better it sticks.',
+      app: 'Build and save your own hooks below — they\'ll appear in the dictionary.' },
+    { e: '🌙', t: 'Little, often, and sleep on it', d: '15 focused minutes a day beats a 3-hour weekend binge, and sleep is when memories are filed. A daily streak isn\'t just a game — spacing plus rest is literally how memory forms.',
+      app: 'Set a daily goal in Review and keep the streak alive.' }
+  ];
+  function renderMethods() {
+    var box = $('methodList');
+    if (box.children.length) return;
+    METHODS.forEach(function (m) {
+      var d = document.createElement('div');
+      d.className = 'method-card';
+      d.innerHTML = '<div class="method-h"><span class="em">' + m.e + '</span><b>' + esc(m.t) + '</b></div>' +
+        '<p>' + esc(m.d) + '</p><p class="method-app">👉 In this app: ' + esc(m.app) + '</p>';
+      box.appendChild(d);
+    });
+  }
+
+  // personal memory hooks (mnemonics), saved on the device
+  var mnem = (function () { try { return JSON.parse(localStorage.getItem('xiezi.mnem')) || {}; } catch (e) { return {}; } })();
+  function saveMnem() { try { localStorage.setItem('xiezi.mnem', JSON.stringify(mnem)); } catch (e) {} }
+
+  function mnemHookHtml(ch) {
+    var h = mnem[ch];
+    return '<div class="mnem-hook">' + (h ? '<b>💡 Your memory hook:</b> ' + esc(h) + ' ' : '') +
+      '<button class="mnem-open ghost small" data-ch="' + esc(ch) + '">' + (h ? '✎ edit hook' : '💡 add a memory hook') + '</button></div>';
+  }
+
+  function openMnem(ch) {
+    showTab('method');
+    $('mnemInput').value = ch;
+    renderMnemWork(ch);
+    $('mnemWork').scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  function renderMnemWork(raw) {
+    var ch = '';
+    for (var i = 0; i < (raw || '').length; i++) { if (/[㐀-鿿]/.test(raw[i])) { ch = raw[i]; break; } }
+    var work = $('mnemWork');
+    if (!ch) { work.hidden = true; return; }
+    work.hidden = false;
+    var row = bestRow(ch) || bestRow(toSimp(ch));
+    var info = charInfo(ch);
+    var comps = info && info[4] && info[4].length > 1 ? info[4] : '';
+    var partsHtml = '', seed = '';
+    if (comps) {
+      var chips = comps.split('').map(function (c) {
+        return '<span class="hint-chip"><span class="hz">' + esc(c) + '</span><span class="gl">' + esc(gloss(c) || '') + '</span></span>';
+      }).join('<span class="rule-plus">+</span>');
+      partsHtml = '<div class="mnem-parts">' + chips + '</div>';
+      seed = 'Weave these pieces into one silly picture: ' +
+        comps.split('').map(function (c) { var g = (gloss(c) || '').split('·').pop().trim(); return c + (g ? ' (' + g + ')' : ''); }).join(' + ') + '.';
+    } else if (info && info[1]) {
+      seed = 'Origin idea: ' + info[1] + '. Turn it into your own vivid image.';
+    } else {
+      seed = 'Picture something that looks like ' + ch + ', or link its sound and meaning into a mini scene.';
+    }
+    work.innerHTML =
+      '<div class="mnem-head"><span class="mnem-hz">' + esc(ch) + '</span>' +
+      (row ? '<span class="mnem-py">' + pinyinHtml(row[2]) + '</span><span class="mnem-def">' + esc(rowGloss(row)) + '</span>' : '') +
+      '<button class="speak" data-say="' + esc(ch) + '">🔊</button></div>' +
+      partsHtml +
+      '<p class="mnem-seed">' + esc(seed) + '</p>' +
+      '<textarea id="mnemText" rows="3" maxlength="240" placeholder="e.g. A woman 女 riding a horse 马 — that\'s my mum!">' + esc(mnem[ch] || '') + '</textarea>' +
+      '<div class="mnem-btns"><button id="mnemSave" class="primary">Save hook</button>' +
+      (mnem[ch] ? '<button id="mnemDel" class="ghost">Delete</button>' : '') +
+      '<button id="mnemDict" class="ghost">Open in dictionary</button></div>';
+    bindSpeakButtons(work);
+    $('mnemSave').addEventListener('click', function () {
+      var v = $('mnemText').value.trim();
+      if (v) { mnem[ch] = v; } else { delete mnem[ch]; }
+      saveMnem();
+      renderMnemWork(ch);
+      renderMnemList();
+      refresh();
+    });
+    if ($('mnemDel')) $('mnemDel').addEventListener('click', function () {
+      delete mnem[ch]; saveMnem(); renderMnemWork(ch); renderMnemList(); refresh();
+    });
+    $('mnemDict').addEventListener('click', function () { setWord(ch); showTab('dict'); });
+  }
+
+  function renderMnemList() {
+    var box = $('mnemList');
+    var keys = Object.keys(mnem);
+    if (!keys.length) { box.innerHTML = '<p class="muted" id="mnemEmpty">No hooks yet. Type a character above and write your first one!</p>'; return; }
+    box.innerHTML = '';
+    keys.forEach(function (ch) {
+      var b = document.createElement('button');
+      b.className = 'mnem-item';
+      var t = mnem[ch]; if (t.length > 60) t = t.slice(0, 60) + '…';
+      b.innerHTML = '<span class="mnem-item-hz">' + esc(ch) + '</span><span class="mnem-item-t">' + esc(t) + '</span>';
+      b.addEventListener('click', function () { $('mnemInput').value = ch; renderMnemWork(ch); $('mnemWork').scrollIntoView({ block: 'center', behavior: 'smooth' }); });
+      box.appendChild(b);
+    });
+  }
+
+  $('mnemInput').addEventListener('input', function () { renderMnemWork(this.value); });
+  document.querySelector('main').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.mnem-open');
+    if (b) openMnem(b.getAttribute('data-ch'));
+  });
 
   // ---------------------------------------------------------------- PWA
   if ('serviceWorker' in navigator) {

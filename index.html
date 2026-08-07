@@ -35,6 +35,7 @@
   <button data-tab="listen">🎧<span>Listen</span></button>
   <button data-tab="words">📚<span>Words</span></button>
   <button data-tab="rules">🧱<span>Rules</span></button>
+  <button data-tab="method">🧠<span>Method</span></button>
   <button data-tab="review">📈<span>Review</span></button>
 </nav>
 
@@ -333,6 +334,23 @@
   </section>
 </div>
 
+<div id="tab-method" hidden>
+  <section class="card">
+    <h2>Learn smart — beat forgetting</h2>
+    <p class="muted">Struggling to remember it all? You're not alone — and it's usually not about effort, it's about method. These are the techniques cognitive science actually backs, and where to use each one in this app.</p>
+    <div id="methodList" class="method-list"></div>
+  </section>
+
+  <section class="card">
+    <h3>💡 Memory hooks — your secret weapon</h3>
+    <p class="muted">The #1 trick for characters: don't memorize strokes — turn the pieces into a vivid, silly little story. Stories <b>you</b> invent stick far better than ones you're told. Make one here and it will pop up every time you meet the character.</p>
+    <input id="mnemInput" type="text" inputmode="text" maxlength="8" autocomplete="off" placeholder="Type a character, e.g. 妈 好 想 …">
+    <div id="mnemWork" hidden></div>
+    <h3 style="margin-top:16px">Your memory hooks</h3>
+    <div id="mnemList" class="mnem-list"><p class="muted" id="mnemEmpty">No hooks yet. Type a character above and write your first one!</p></div>
+  </section>
+</div>
+
 <div id="tab-review" hidden>
   <section class="card" id="reviewHome">
     <h2>Your progress</h2>
@@ -394,7 +412,7 @@
       <button id="voiceTest" class="ghost">🔊 Test — 你好，我在学中文</button>
     </section>
 
-    <p id="appVersion">version 31</p>
+    <p id="appVersion">version 32</p>
 
     <section id="aboutPanel" class="about-panel" hidden>
       <h3>About</h3>

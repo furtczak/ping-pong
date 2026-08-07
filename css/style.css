@@ -341,6 +341,32 @@ button.primary { background: var(--ink); color: var(--card); border-color: var(-
 .tone-opt.bad { border-color: var(--tone1); border-width: 2px; }
 .tone-opt:disabled { opacity: .9; }
 
+/* Method & memory hooks */
+.method-list { display: grid; gap: 10px; }
+.method-card { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.method-h { display: flex; align-items: center; gap: 8px; }
+.method-h .em { font-size: 22px; }
+.method-h b { font-size: 15px; }
+.method-card p { font-size: 13px; line-height: 1.5; margin: 6px 0 0; }
+.method-app { color: var(--accent); font-weight: 600; }
+#mnemInput { width: 100%; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+#mnemInput:focus { outline: 2px solid var(--accent); border-color: transparent; }
+#mnemWork { margin-top: 12px; }
+.mnem-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.mnem-hz { font-size: 40px; }
+.mnem-py { font-size: 20px; font-weight: 600; }
+.mnem-def { color: var(--muted); font-size: 14px; }
+.mnem-parts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+.mnem-seed { font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 10px; padding: 8px 10px; }
+#mnemText { width: 100%; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-top: 8px; resize: vertical; }
+.mnem-btns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.mnem-list { display: grid; gap: 8px; }
+.mnem-item { display: flex; gap: 10px; align-items: baseline; text-align: left; background: var(--bg); border-radius: 10px; padding: 9px 12px; }
+.mnem-item-hz { font-size: 24px; }
+.mnem-item-t { font-size: 13px; color: var(--muted); }
+.mnem-hook { margin-top: 8px; font-size: 13px; }
+.mnem-hook b { color: var(--accent); }
+
 /* Progress & review */
 .rev-stats { display: flex; gap: 8px; margin-bottom: 14px; }
 .rev-stat { flex: 1; text-align: center; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 4px; }
