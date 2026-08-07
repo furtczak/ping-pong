@@ -1,5 +1,5 @@
 /* Cache-first service worker: app works fully offline after first load. */
-var VERSION = 'xiezi-v31';
+var VERSION = 'xiezi-v32';
 var ASSETS = [
   './',
   'index.html',
